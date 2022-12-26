@@ -26,6 +26,7 @@ def video_to_clip(youtube_link, season, match_date, court_number, match_number, 
     yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(base_path, "match_video.mp4")
 
     
+    # make clip from downloaded video
     video_path = base_path + "match_video.mp4"
     clip = VideoFileClip(video_path)
 
@@ -51,52 +52,45 @@ def video_to_clip(youtube_link, season, match_date, court_number, match_number, 
         
         else:
             clip.subclip(start_sec, end_sec).write_videofile(clip_file_path)
-        
+    
+    # delete downloaded video because we only need frames and clips from video
     os.remove(video_path)
+    
 # %%
-def video_to_frames(youtube_link, season, match_date, court_number, match_number):
-    # make folder if not exists
+def get_maximum_clip(season, match_date, court_number, match_number):
     base_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
     
-    if not os.path.exists(base_path):
-        os.makedirs(base_path)
-    
-    # download youtube video from link to the folder
-    yt = YouTube(youtube_link)
-    yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution')[-1].download(base_path, "match_video.mp4")
+    return len(os.listdir(base_path))
 
-    # makke frames from downloaded video
-    frame_path = base_path + "/original_frames/"
+# %%
+def clips_to_frames(season, match_date, court_number, match_number):
+    max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
     
-    if not os.path.exists(frame_path):
-        os.makedirs(frame_path)
-
-    video_path = base_path + "match_video.mp4"
-    clip = cv2.VideoCapture(video_path)
+    for i in range(1, max_clip_number + 1):
+        clip_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/" + "clip" + str(i) + "/"
+        clip_file_path = clip_path + "clip" + str(i) + ".mp4"
+        clip = cv2.VideoCapture(clip_file_path)   
     
-    print("== Make clips for: " + season + " / " + match_date + " / " + court_number + " / " + match_number + " ==")
+        print("== Make clips for: " + season + " / " + match_date + " / " + court_number + " / " + match_number + " / clip " + str(i) + " ==")
     
-    current_frame = 0
+        current_frame = 0
     
-    while (True):
-        ret, frame = clip.read()
-        if ret:
-            name = frame_path + "frame_" + str(current_frame) + ".jpg"
-            cv2.imwrite(name, frame)
-            current_frame += 1
-        else:
-            break
+        while (True):
+            ret, frame = clip.read()
+            if ret:
+                name = clip_path + "frame_" + str(current_frame) + ".jpg"
+                cv2.imwrite(name, frame)
+                current_frame += 1
+            else:
+                break
 
 
-    if (current_frame != 0): 
-        print("0 ~ ", current_frame, " frames created.")
+        if (current_frame != 0): 
+            print("0 ~ ", current_frame, " frames created.")
 
-    clip.release()
-    cv2.destroyAllWindows()
+        clip.release()
+        cv2.destroyAllWindows()
     
-    # delete downloaded video because we only need frames from video
-    os.remove(video_path)
-
 # %%
 clip_info_list = [["0:9", "0:21"], ["0:43", "0:58"], ["1:11", "1:23"], ["1:38", "1:50"], ["2:05", "2:10"], ["2:25", "2:31"], ["2:48", "2:56"], ["3:09", "3:17"],
 ["3:33", "3:43"], ["3:55", "4:00"], ["4:22", "4:27"], ["4:45", "4:53"], ["5:09", "5:14"], ["5:31", "5:35"], ["5:59", "6:07"], ["6:21", "6:27"],
@@ -108,13 +102,9 @@ clip_info_list = [["0:9", "0:21"], ["0:43", "0:58"], ["1:11", "1:23"], ["1:38", 
 ["27:50", "27:59"], ["28:13", "28:35"], ["28:53", "28:59"], ["29:16", "29:21"], ["29:39", "29:46"], ["29:57", "30:07"], ["30:27", "30:34"]]
 video_to_clip("https://youtu.be/AdmCmegtgc8", "22F", "20220908", "court1", "match1", clip_info_list)
 
-
 # %%
-def get_maximum_clip(season, match_date, court_number, match_number):
-    base_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
-    
-    return len(os.listdir(base_path))
-   
+clips_to_frames( "22F", "20220908", "court1", "match1")
+
 # %%
 clip_file_path = base_path + "clip" + str(1) + "/" + "clip" + str(1) + ".mp4"
 os.path.exists(clip_file_path)
@@ -126,6 +116,12 @@ court_number = "court1"
 match_number = "match1"
 base_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/" 
 base_path
+
+# %%
+max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
+
+for i in range(1, max_clip_number + 1):
+   print(i)
 
 # %%
 
