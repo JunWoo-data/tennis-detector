@@ -116,3 +116,4 @@ def clips_to_frames(season, match_date, court_number, match_number):
 # clips_to_frames( "22F", "20220908", "court1", "match1")
 
 # %%
+# os.listdir(DATA_PATH + "detect/22F/20220908/court1/match1/clip63/frames/")
