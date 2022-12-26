@@ -15,6 +15,9 @@ from google.colab import drive
 import pandas as pd
 import numpy as np
 import glob
+import matplotlib.pyplot as plt 
+import matplotlib.patches as patches
+from matplotlib.pyplot import figure
 from config import DATA_PATH
 
 # %%
@@ -155,8 +158,64 @@ combine_player_detect_labels(season, match_date, court_number, match_number)
 
 
 # %%
-temp = pd.read_csv("/content/drive/MyDrive/ALT+TAB/data/detect/22F/20220908/court1/match1/all_player_labels.csv")
-temp
+match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+labels_file_path = match_path + "/all_player_labels.csv"
+labels_file = pd.read_csv(labels_file_path)
+clip_number = 1
+frames_path = match_path + "/clip" + str(clip_number) + "/frames/"
+frame_range = [8, 10]
+label = [0]
 
+# %%
+os.listdir(frames_path)
+# %%
+frame_start = frame_range[0]
+frame_end = frame_range[1]
+
+# %%
+labels_file = labels_file[(labels_file["label"].isin(label)) & 
+                          (labels_file["clip_number"] == 1) & 
+                          (labels_file["frame_number"].isin(range(frame_start, frame_end + 1)))].sort_values("frame_number")
+
+labels_file
+# %%
+
+for fn in range(frame_start, frame_end + 1):
+    img_path = frames_path + "frame_" + str(fn) + ".jpg"
+    frame = cv2.imread(img_path)
+    
+    fig, ax = plt.subplots(figsize = (15, 10))
+    ax.imshow(frame)
+    
+    target_labels_file = labels_file[labels_file["frame_number"] == fn]
+    
+    for ri in range(target_labels_file.shape[0]):
+        xmin = target_labels_file.iloc[ri]["x1"]
+        ymin = target_labels_file.iloc[ri]["y1"]
+        xmax = target_labels_file.iloc[ri]["x2"]
+        ymax = target_labels_file.iloc[ri]["y2"]
+        
+        xy = (int(xmin), int(ymin))
+        height = int(ymax - ymin)
+        width = int(xmax - xmin)
+        
+        rect = patches.Rectangle(xy, width, height, linewidth = 2, edgecolor = "r", facecolor = "none")
+        ax.add_patch(rect)
+    
+    plt.show
+
+# %%
+target_labels_file = labels_file[labels_file["frame_number"] == 8]
+target_labels_file
+
+# %%
+target_labels_file.iloc[0]["x1"]
+
+# %%
+# def visualize_labels(season, match_date, court_number, match_number, clip_number, frame_range, label = [0, 1, 38])
+
+# %%
+
+temp["label"].isin([0])
 # %%
 temp[(temp.clip_number == 1) & (temp.frame_number == 0)]
