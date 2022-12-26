@@ -113,6 +113,6 @@ def clips_to_frames(season, match_date, court_number, match_number):
 # video_to_clip("https://youtu.be/AdmCmegtgc8", "22F", "20220908", "court1", "match1", clip_info_list)
 
 # %%
-clips_to_frames( "22F", "20220908", "court1", "match1")
+# clips_to_frames( "22F", "20220908", "court1", "match1")
 
 # %%
