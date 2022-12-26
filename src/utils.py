@@ -153,64 +153,10 @@ match_number = "match1"
 # %%
 combine_player_detect_labels(season, match_date, court_number, match_number)
 
-# %%
-max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
-max_clip_number
-# %%
-all_player_labels = pd.DataFrame(columns = ["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"])
-all_player_labels
-# %%
-for i in range(1, max_clip_number + 1):
-    labels_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/" + "clip" + str(i) + "/player_detect/labels/"
-    label_list = glob.glob(labels_path + "*.txt")
-    
-    for label in label_list:
-        frame_number = int(label.split("/")[-1].split("_")[-1].split(".")[0])
-        
-        player_labels = pd.read_csv(label, sep = " ", header = None, names = ["label", "x1", "y1", "x2", "y2"])
-        player_labels["clip_number"] = i
-        player_labels["frame_number"] = frame_number
-        player_labels = player_labels[["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"]]
-        
-        all_player_labels = all_player_labels.append(player_labels)
-
-        
-# %%
-all_player_labels[all_player_labels["frame_number"] == 40]
 
 # %%
-labels_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/" + "clip" + str(i) + "/player_detect/labels/"
-label_list = glob.glob(labels_path + "*.txt")
-label_list
-# %%
-
-# for label in label_list
-label = label_list[0]
-label
+temp = pd.read_csv("/content/drive/MyDrive/ALT+TAB/data/detect/22F/20220908/court1/match1/all_player_labels.csv")
+temp
 
 # %%
-frame_number = label.split("/")[-1].split("_")[-1].split(".")[0]
-frame_number
-
-# %%
-player_labels = pd.read_csv(label, sep = " ", header = None, names = ["label", "x1", "y1", "x2", "y2"])
-player_labels["clip_number"] = i
-player_labels["frame_number"] = frame_number
-player_labels = player_labels[["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"]]
-player_labels
-
-# %%
-all_player_labels = all_player_labels.append(player_labels)
-
-# %%
-all_player_labels
-# %%
-with open(label) as f:
-    contents = f.readlines()
-    print(contents[0])
-    print(contents[1])
-    print(contents[2])
-    print(contents[3])
-# %%
-label_list
-# %%
+temp[(temp.clip_number == 1) & (temp.frame_number == 0)]
