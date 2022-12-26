@@ -12,7 +12,9 @@ import cv2
 import os
 from google.colab.patches import cv2_imshow
 from google.colab import drive
+import pandas as pd
 import numpy as np
+import glob
 from config import DATA_PATH
 
 # %%
@@ -116,4 +118,99 @@ def clips_to_frames(season, match_date, court_number, match_number):
 # clips_to_frames( "22F", "20220908", "court1", "match1")
 
 # %%
-# os.listdir(DATA_PATH + "detect/22F/20220908/court1/match1/clip63/frames/")
+def combine_player_detect_labels(season, match_date, court_number, match_number):
+    max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
+    all_player_labels = pd.DataFrame(columns = ["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"])
+
+    for i in range(1, max_clip_number + 1):
+        match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+        labels_path = match_path + "clip" + str(i) + "/player_detect/labels/"
+        label_list = glob.glob(labels_path + "*.txt")
+
+        for label in label_list:
+            frame_number = int(label.split("/")[-1].split("_")[-1].split(".")[0])
+
+            player_labels = pd.read_csv(label, sep = " ", header = None, names = ["label", "x1", "y1", "x2", "y2"])
+            player_labels["clip_number"] = i
+            player_labels["frame_number"] = frame_number
+            player_labels = player_labels[["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"]]
+
+            all_player_labels = all_player_labels.append(player_labels)
+
+    all_player_labels.to_csv(match_path + "all_player_labels.csv", index = False)
+    print("== All player labels saved for " + season + " / " + match_date + " / " + court_number + " / " + match_number + " :")
+    print("- save path: " + match_path + "all_player_labels.csv")
+    print("- file name: all_player_labels.csv")
+    print("- size: " + str(all_player_labels.shape))
+    print(" ")
+
+# %%
+season = "22F"
+match_date = "20220908"
+court_number = "court1"
+match_number = "match1"
+
+# %%
+combine_player_detect_labels(season, match_date, court_number, match_number)
+
+# %%
+max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
+max_clip_number
+# %%
+all_player_labels = pd.DataFrame(columns = ["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"])
+all_player_labels
+# %%
+for i in range(1, max_clip_number + 1):
+    labels_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/" + "clip" + str(i) + "/player_detect/labels/"
+    label_list = glob.glob(labels_path + "*.txt")
+    
+    for label in label_list:
+        frame_number = int(label.split("/")[-1].split("_")[-1].split(".")[0])
+        
+        player_labels = pd.read_csv(label, sep = " ", header = None, names = ["label", "x1", "y1", "x2", "y2"])
+        player_labels["clip_number"] = i
+        player_labels["frame_number"] = frame_number
+        player_labels = player_labels[["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"]]
+        
+        all_player_labels = all_player_labels.append(player_labels)
+
+        
+# %%
+all_player_labels[all_player_labels["frame_number"] == 40]
+
+# %%
+labels_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/" + "clip" + str(i) + "/player_detect/labels/"
+label_list = glob.glob(labels_path + "*.txt")
+label_list
+# %%
+
+# for label in label_list
+label = label_list[0]
+label
+
+# %%
+frame_number = label.split("/")[-1].split("_")[-1].split(".")[0]
+frame_number
+
+# %%
+player_labels = pd.read_csv(label, sep = " ", header = None, names = ["label", "x1", "y1", "x2", "y2"])
+player_labels["clip_number"] = i
+player_labels["frame_number"] = frame_number
+player_labels = player_labels[["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"]]
+player_labels
+
+# %%
+all_player_labels = all_player_labels.append(player_labels)
+
+# %%
+all_player_labels
+# %%
+with open(label) as f:
+    contents = f.readlines()
+    print(contents[0])
+    print(contents[1])
+    print(contents[2])
+    print(contents[3])
+# %%
+label_list
+# %%
