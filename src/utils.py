@@ -104,7 +104,7 @@ def clips_to_frames(season, match_date, court_number, match_number):
 
         clip.release()
         cv2.destroyAllWindows()
-    
+
 # %%
 def combine_player_detect_labels(season, match_date, court_number, match_number):
     max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
@@ -151,9 +151,6 @@ def visualize_labels(season, match_date, court_number, match_number, clip_number
         img_path = frames_path + "frame_" + str(fn) + ".jpg"
         frame = cv2.imread(img_path)
 
-        fig, ax = plt.subplots(figsize = (15, 10))
-        ax.imshow(frame)
-
         target_labels_file = labels_file[labels_file["frame_number"] == fn]
 
         for ri in range(target_labels_file.shape[0]):
@@ -165,18 +162,21 @@ def visualize_labels(season, match_date, court_number, match_number, clip_number
 
             x1 = (xc - w / 2) 
             y1 = (yc - h / 2) 
+            x2 = (xc + w / 2) 
+            y2 = (yc + h / 2) 
 
-            xy = (int(x1), int(y1))
+            c1, c2 = (int(x1), int(y1)), (int(x2), int(y2))
+            t1 = round(0.002 * (frame.shape[0] + frame.shape[1]) / 2) + 1
 
-            if label == 0: color = "r"
-            elif label == 1: color = "g"
-            else: color = "b"
+            if label == 0: color = (255, 0, 0)
+            elif label == 1: color = (0, 255, 0)
+            else: color = (0, 0, 255)
 
-            rect = patches.Rectangle(xy, w, h, linewidth = 2, edgecolor = color, facecolor = "none")
-            ax.add_patch(rect)
+            output = cv2.rectangle(frame, c1, c2, color, thickness = t1, lineType = cv2.LINE_AA)
     
-    plt.show()
-
+        cv2_imshow(output)
+    
+    
 # %%
 season = "22F"
 match_date = "20220908"
@@ -200,8 +200,11 @@ match_number = "match1"
 # clips_to_frames( "22F", "20220908", "court1", "match1")
 
 # %%
-#combine_player_detect_labels(season, match_date, court_number, match_number)
+# combine_player_detect_labels(season, match_date, court_number, match_number)
 
 # %%
+clip_number = 1
+frame_range = [0, 10]
+label = [0]
 
-
+visualize_labels(season, match_date, court_number, match_number, clip_number, frame_range, label)
