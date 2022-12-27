@@ -181,56 +181,6 @@ def visualize_labels_by_frame_range(season, match_date, court_number, match_numb
         visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, fn, label)
 
 # %%
-def visualize_labels_by_frame_range(season, match_date, court_number, match_number, clip_number, frame_range, label = [0, 1, 38]):
-    match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
-    labels_file_path = match_path + "/all_player_labels.csv"
-    frames_path = match_path + "/clip" + str(clip_number) + "/frames/"
-    
-    labels_file = pd.read_csv(labels_file_path)
-    
-    frame_start = frame_range[0]
-    frame_end = frame_range[1]
-    
-    labels_file = labels_file[(labels_file["label"].isin(label)) & 
-                              (labels_file["clip_number"] == clip_number) & 
-                              (labels_file["frame_number"].isin(range(frame_start, frame_end + 1)))].sort_values("frame_number")
-
-    print("== Visualize labels for: " + season + " / " + match_date + " / " + court_number + " / " + match_number + " / clip " + str(clip_number) + " ==")
-    print("- frames: " + str(frame_start) + " ~ " + str(frame_end))
-    print(" ")
-    
-    for fn in range(frame_start, frame_end + 1):
-        print("- frame: " + str(fn))
-        img_path = frames_path + "frame_" + str(fn) + ".jpg"
-        frame = cv2.imread(img_path)
-
-        target_labels_file = labels_file[labels_file["frame_number"] == fn]
-
-        for ri in range(target_labels_file.shape[0]):
-            label = target_labels_file.iloc[ri]["label"] 
-            xc = target_labels_file.iloc[ri]["xc"] * frame.shape[1]
-            yc = target_labels_file.iloc[ri]["yc"] * frame.shape[0]
-            w = target_labels_file.iloc[ri]["w"] * frame.shape[1]
-            h = target_labels_file.iloc[ri]["h"] * frame.shape[0]
-
-            x1 = (xc - w / 2) 
-            y1 = (yc - h / 2) 
-            x2 = (xc + w / 2) 
-            y2 = (yc + h / 2) 
-
-            c1, c2 = (int(x1), int(y1)), (int(x2), int(y2))
-            t1 = round(0.002 * (frame.shape[0] + frame.shape[1]) / 2) + 1
-
-            if label == 0: color = (255, 0, 0)
-            elif label == 1: color = (0, 255, 0)
-            else: color = (0, 0, 255)
-
-            output = cv2.rectangle(frame, c1, c2, color, thickness = t1, lineType = cv2.LINE_AA)
-
-        cv2_imshow(output)
-    
-    
-# %%
 season = "22F"
 match_date = "20220908"
 court_number = "court1"
