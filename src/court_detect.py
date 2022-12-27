@@ -646,4 +646,5 @@ court_number = "court1"
 match_number = "match1"
 
 # %%
-court_detect(season, match_date, court_number, match_number)
+court_detector = court_detect(season, match_date, court_number, match_number)
+# %%

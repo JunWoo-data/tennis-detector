@@ -49,20 +49,20 @@ def compute_perspective_transform(corner_points,width,height,image):
 	return matrix,img_transformed
 
 # %%
-tl_x = court_coordinates[court_coordinates["type"] == "top_outer"]["x1"]
-tl_y = court_coordinates[court_coordinates["type"] == "top_outer"]["y1"]
+tl_x = court_coordinates[court_coordinates["type"] == "top_outer"]["x1"].values[0] 
+tl_y = court_coordinates[court_coordinates["type"] == "top_outer"]["y1"].values[0] 
 tl = (tl_x, tl_y)
 
-tr_x = court_coordinates[court_coordinates["type"] == "top_outer"]["x2"]
-tr_y = court_coordinates[court_coordinates["type"] == "top_outer"]["y2"]
+tr_x = court_coordinates[court_coordinates["type"] == "top_outer"]["x2"].values[0] 
+tr_y = court_coordinates[court_coordinates["type"] == "top_outer"]["y2"].values[0] 
 tr = (tr_x, tr_y)
 
-bl_x = court_coordinates[court_coordinates["type"] == "bottom_outer"]["x1"]
-bl_y = court_coordinates[court_coordinates["type"] == "bottom_outer"]["y1"]
+bl_x = court_coordinates[court_coordinates["type"] == "bottom_outer"]["x1"].values[0] 
+bl_y = court_coordinates[court_coordinates["type"] == "bottom_outer"]["y1"].values[0] 
 bl = (bl_x, bl_y)
 
-br_x = court_coordinates[court_coordinates["type"] == "bottom_outer"]["x2"]
-br_y = court_coordinates[court_coordinates["type"] == "bottom_outer"]["y2"]
+br_x = court_coordinates[court_coordinates["type"] == "bottom_outer"]["x2"].values[0] 
+br_y = court_coordinates[court_coordinates["type"] == "bottom_outer"]["y2"].values[0] 
 br = (br_x, br_y)
 
 # %%
@@ -71,33 +71,41 @@ widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
 maxWidth = max(int(widthA), int(widthB))
 
 # %%
-
-
-
-# %%
-corner_points = [(tl_x, tl_y), (tr_x, tr_y), (br_x, br_y), (bl_x, bl_y)]
-corner_points_array = np.float32(corner_points)
-corner_points_array
+heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
+heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
+maxHeight = max(int(heightA), int(heightB))
 
 # %%
-width = WIDTH_ORIGINAL
-height = HEIGHT_ORIGINAL
+dst = np.array([
+		[0, 0],
+		[maxWidth - 1, 0],
+		[maxWidth - 1, maxHeight - 1],
+		[0, maxHeight - 1]], dtype = "float32")
 
 # %%
-img_params = np.float32([[0,0],[width,0],[0,height],[width,height]])
+rect = np.float32([tl, tr, br, bl])
 
 # %%
-matrix = cv2.getPerspectiveTransform(corner_points_array, img_params) 
+M = cv2.getPerspectiveTransform(rect, dst)
 
 # %%
 img_path = match_path + "clip1/frames/frame_0.jpg"
 img = cv2.imread(img_path)
 
 # %%
-img_transformed = cv2.warpPerspective(img, matrix, (width,height))
+warped = cv2.warpPerspective(img, M, (maxWidth, maxHeight))
+cv2_imshow(warped)
 
 # %%
-cv2_imshow(img_transformed)
+warped_with_margine = cv2.copyMakeBorder(warped, 500, 500, 500, 500, cv2.BORDER_CONSTANT, None, value = [255, 255, 255])
+cv2_imshow(warped_with_margine)
+
+
+# %%
+M
+
+# %%
+all_player_labels
 
 # %%
 # check frames that has less than 4
