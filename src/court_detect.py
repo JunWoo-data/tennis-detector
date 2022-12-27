@@ -522,6 +522,109 @@ def display_lines_and_points_on_frame(frame, lines=(), points=(), line_color=(0,
     return frame
 
 # %%
+def court_detect(season, match_date, court_number, match_number, frame_number = 0):
+    match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+    frame_path = match_path + "clip" + str(1) + "/frames/frame" + "_" + str(frame_number) + ".jpg"
+    
+    frame = cv2.imread(frame_path)
+    
+    court_detector = CourtDetector()
+    court_detector.detect(frame, 0)
+    
+    # visualize detected court
+    # baseline top
+    line = court_detector.baseline_top
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # baseline bottom
+    line = court_detector.baseline_bottom
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # left court line
+    line = court_detector.left_court_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # right court line
+    line = court_detector.right_court_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # left inner line
+    line = court_detector.left_inner_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # right inner line
+    line = court_detector.right_inner_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # middle line
+    line = court_detector.middle_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # top inner line
+    line = court_detector.top_inner_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # bottom inner line
+    line = court_detector.bottom_inner_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # net line
+    line = court_detector.net
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    cv2_imshow(output)
+    
+    output_path = match_path + "frame_" + str(frame_number) + "_court_detect.jpg"
+    cv2.imwrite(output_path, output)
+    
+    cv2.destroyAllWindows()
+    
+    # save csv file about tennis line coordinate 
+
+# %%
+# %%
+# self.baseline_top = None - top_outer
+# self.baseline_bottom = None - bottom_outer
+# self.net = None - net
+# self.left_court_line = None - left_outer
+# self.right_court_line = None - right_outer
+# self.left_inner_line = None - left_inner
+# self.right_inner_line = None - right_inner
+# self.middle_line = None - middle
+# self.top_inner_line = None - top_inner
+# self.bottom_inner_line = None - bottom_inner
+
+    
+# %%
 season = "22F"
 match_date = "20220908"
 court_number = "court1"
@@ -536,40 +639,98 @@ img = cv2.imread(file_name)
 cv2_imshow(img)
 
 # %%
-s = time.time()
-
-# %%
 court_detector = CourtDetector()
-
-# %%
 court_detector.detect(img, 0)
 
 # %%
-top, bottom = court_detector.get_extra_parts_location()
+# self.baseline_top = None
+# self.baseline_bottom = None
+# self.net = None
+# self.left_court_line = None
+# self.right_court_line = None
+# self.left_inner_line = None
+# self.right_inner_line = None
+# self.middle_line = None
+# self.top_inner_line = None
+# self.bottom_inner_line = None
 
 # %%
-court_detector.track_court(img)
-
-# %%
-wraped_court = court_detector.get_warped_court()
-
-plt.imshow(wraped_court)
-# %%
-top
-
-# %%
-bottom
-
-# %%
-cv2.circle(img, tuple(top.astype(int)), 3, (0,255,0), 1)
-cv2.circle(img, tuple(bottom.astype(int)), 3, (0,255,0), 1)
-img[int(bottom[1]-10):int(bottom[1]+10), int(bottom[0] - 10):int(bottom[0]+10), :] = (0,0,0)
-img[int(top[1]-10):int(top[1]+10), int(top[0] - 10):int(top[0]+10), :] = (0,0,0)
-
-# %%
-cv2_imshow(img)
-if cv2.waitKey(0):
-    cv2.destroyAllWindows()
+def visualize_court_line(frame, court_detector):
+    # baseline top
+    line = court_detector.baseline_top
+    start = line[:2]
+    end = line[2:]
     
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # baseline bottom
+    line = court_detector.baseline_bottom
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # left court line
+    line = court_detector.left_court_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # right court line
+    line = court_detector.right_court_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # left inner line
+    line = court_detector.left_inner_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # right inner line
+    line = court_detector.right_inner_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # middle line
+    line = court_detector.middle_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # top inner line
+    line = court_detector.top_inner_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # bottom inner line
+    line = court_detector.bottom_inner_line
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    # net line
+    line = court_detector.net
+    start = line[:2]
+    end = line[2:]
+    
+    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
+    
+    cv2_imshow(output)
+    cv2.destroyAllWindows()
+
 # %%
-print(f'time = {time.time() - s}')
+visualize_court_line(img, court_detector)
+
+
+# %%
