@@ -529,8 +529,8 @@ def court_detect(season, match_date, court_number, match_number, frame_number = 
     
     frame = cv2.imread(frame_path)
     
-    #court_detector = CourtDetector()
-    #court_detector.detect(frame, 0)
+    court_detector = CourtDetector()
+    court_detector.detect(frame, 0)
     
     # visualize detected court
     # baseline top
