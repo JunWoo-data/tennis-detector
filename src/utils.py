@@ -15,6 +15,7 @@ from google.colab import drive
 import pandas as pd
 import numpy as np
 import glob
+import random
 import matplotlib.pyplot as plt 
 import matplotlib.patches as patches
 from matplotlib.pyplot import figure
@@ -123,7 +124,7 @@ def clips_to_frames(season, match_date, court_number, match_number):
 # %%
 def combine_player_detect_labels(season, match_date, court_number, match_number):
     max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
-    all_player_labels = pd.DataFrame(columns = ["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"])
+    all_player_labels = pd.DataFrame(columns = ["clip_number", "frame_number", "label", "xc", "yc", "w", "h"])
 
     for i in range(1, max_clip_number + 1):
         match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
@@ -133,10 +134,10 @@ def combine_player_detect_labels(season, match_date, court_number, match_number)
         for label in label_list:
             frame_number = int(label.split("/")[-1].split("_")[-1].split(".")[0])
 
-            player_labels = pd.read_csv(label, sep = " ", header = None, names = ["label", "x1", "y1", "x2", "y2"])
+            player_labels = pd.read_csv(label, sep = " ", header = None, names = ["label", "xc", "yc", "w", "h"])
             player_labels["clip_number"] = i
             player_labels["frame_number"] = frame_number
-            player_labels = player_labels[["clip_number", "frame_number", "label", "x1", "y1", "x2", "y2"]]
+            player_labels = player_labels[["clip_number", "frame_number", "label", "xc", "yc", "w", "h"]]
 
             all_player_labels = all_player_labels.append(player_labels)
 
@@ -158,6 +159,50 @@ combine_player_detect_labels(season, match_date, court_number, match_number)
 
 
 # %%
+def visualize_labels(season, match_date, court_number, match_number, clip_number, frame_range, label = [0, 1, 38]):
+    match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+    labels_file_path = match_path + "/all_player_labels.csv"
+    frames_path = match_path + "/clip" + str(clip_number) + "/frames/"
+    
+    labels_file = pd.read_csv(labels_file_path)
+    
+    frame_start = frame_range[0]
+    frame_end = frame_range[1]
+    
+    labels_file = labels_file[(labels_file["label"].isin(label)) & 
+                              (labels_file["clip_number"] == clip_number) & 
+                              (labels_file["frame_number"].isin(range(frame_start, frame_end + 1)))].sort_values("frame_number")
+
+    for fn in range(frame_start, frame_end + 1):
+        img_path = frames_path + "frame_" + str(fn) + ".jpg"
+        frame = cv2.imread(img_path)
+
+        fig, ax = plt.subplots(figsize = (15, 10))
+        ax.imshow(frame)
+
+        target_labels_file = labels_file[labels_file["frame_number"] == fn]
+
+        for ri in range(target_labels_file.shape[0]):
+            label = target_labels_file.iloc[ri]["label"] 
+            xc = target_labels_file.iloc[ri]["xc"] * frame.shape[1]
+            yc = target_labels_file.iloc[ri]["yc"] * frame.shape[0]
+            w = target_labels_file.iloc[ri]["w"] * frame.shape[1]
+            h = target_labels_file.iloc[ri]["h"] * frame.shape[0]
+
+            x1 = (xc - w / 2) 
+            y1 = (yc - h / 2) 
+
+            xy = (int(x1), int(y1))
+
+            if label == 0: color = "r"
+            elif label == 1: color = "g"
+            else: color = "b"
+
+            rect = patches.Rectangle(xy, w, h, linewidth = 2, edgecolor = color, facecolor = "none")
+            ax.add_patch(rect)
+    
+    plt.show()
+# %%
 match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
 labels_file_path = match_path + "/all_player_labels.csv"
 labels_file = pd.read_csv(labels_file_path)
@@ -174,7 +219,7 @@ frame_end = frame_range[1]
 
 # %%
 labels_file = labels_file[(labels_file["label"].isin(label)) & 
-                          (labels_file["clip_number"] == 1) & 
+                          (labels_file["clip_number"] == clip_number) & 
                           (labels_file["frame_number"].isin(range(frame_start, frame_end + 1)))].sort_values("frame_number")
 
 labels_file
@@ -184,32 +229,72 @@ for fn in range(frame_start, frame_end + 1):
     img_path = frames_path + "frame_" + str(fn) + ".jpg"
     frame = cv2.imread(img_path)
     
-    fig, ax = plt.subplots(figsize = (15, 10))
-    ax.imshow(frame)
-    
     target_labels_file = labels_file[labels_file["frame_number"] == fn]
     
     for ri in range(target_labels_file.shape[0]):
-        xmin = target_labels_file.iloc[ri]["x1"]
-        ymin = target_labels_file.iloc[ri]["y1"]
-        xmax = target_labels_file.iloc[ri]["x2"]
-        ymax = target_labels_file.iloc[ri]["y2"]
+        label = target_labels_file.iloc[ri]["label"] 
+        xc = target_labels_file.iloc[ri]["xc"] * frame.shape[1]
+        yc = target_labels_file.iloc[ri]["yc"] * frame.shape[0]
+        w = target_labels_file.iloc[ri]["w"] * frame.shape[1]
+        h = target_labels_file.iloc[ri]["h"] * frame.shape[0]
+
+        x1 = (xc - w / 2) 
+        y1 = (yc - h / 2) 
+        x2 = (xc + w / 2) 
+        y2 = (yc + h / 2) 
         
-        xy = (int(xmin), int(ymin))
-        height = int(ymax - ymin)
-        width = int(xmax - xmin)
+        c1, c2 = (int(x1), int(y1)), (int(x2), int(y2))
+        t1 = round(0.002 * (frame.shape[0] + frame.shape[1]) / 2) + 1
         
-        rect = patches.Rectangle(xy, width, height, linewidth = 2, edgecolor = "r", facecolor = "none")
-        ax.add_patch(rect)
+        if label == 0: color = (1, 0, 0)
+        elif label == 1: color = (0, 1, 0)
+        else: color = (0, 0, 1)
+        
+        output = cv2.rectangle(frame, c1, c2, color, thickness = t1, lineType = cv2.LINE_AA)
     
-    plt.show
+    cv2_imshow(output)
+
+
+# %%
+img_path = frames_path + "frame_" + str(8) + ".jpg"
+frame = cv2.imread(img_path)
+frame.shape
+
+# %%
+cv2_imshow(frame)
 
 # %%
 target_labels_file = labels_file[labels_file["frame_number"] == 8]
 target_labels_file
 
 # %%
-target_labels_file.iloc[0]["x1"]
+x = target_labels_file.iloc[4]["x1"]
+y = target_labels_file.iloc[4]["y1"]
+w = target_labels_file.iloc[4]["x2"]
+h = target_labels_file.iloc[4]["y2"]
+print(x, y, w, h)
+
+# %%
+x1 = x - (w / 2)
+y1 = y - (h / 2)
+x2 = x + (w / 2)
+y2 = y + (h / 2)
+print(x1, y1, x2, y2)
+
+# %%
+x1 = x1 * 1280
+y1 = y1 * 720
+x2 = x2 * 1280
+y2 = y2 * 720
+print(x1, y1, x2, y2)
+# %%
+c1, c2 = (int(x1), int(y1)), (int(x2), int(y2))
+t1 = round(0.002 * (frame.shape[0] + frame.shape[1]) / 2) + 1
+color = [random.randint(0, 255) for _ in range(3)]
+
+# %%
+output = cv2.rectangle(frame, c1, c2, color, thickness = t1, lineType = cv2.LINE_AA)
+cv2_imshow(output)
 
 # %%
 # def visualize_labels(season, match_date, court_number, match_number, clip_number, frame_range, label = [0, 1, 38])
