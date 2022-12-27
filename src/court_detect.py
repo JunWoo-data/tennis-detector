@@ -636,6 +636,8 @@ def court_detect(season, match_date, court_number, match_number, frame_number = 
     print("- file name: court_coordinates.csv")
     print("- size: " + str(court_coordinates.shape))
     print(" ")
+    
+    return court_detector
 
 # %%
 season = "22F"
