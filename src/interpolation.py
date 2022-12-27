@@ -1,10 +1,22 @@
 # %%
 from config import DATA_PATH, WIDTH_ORIGINAL, HEIGHT_ORIGINAL
+from utils import visualize_point_on_image
 import pandas as pd
 import numpy as np
 import cv2
 from google.colab.patches import cv2_imshow
 
+
+# %%
+# TODO: Delete
+def visualize_point_on_image(img, coordinates):
+    img_copy = img.copy()
+    output = cv2.circle(img_copy, (int(coordinates[0]), int(coordinates[1])), 15, (0,255,0), 4)
+    
+    cv2_imshow(output)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    
 # %%
 season = "22F"
 match_date = "20220908"
@@ -93,6 +105,12 @@ img_path = match_path + "clip1/frames/frame_0.jpg"
 img = cv2.imread(img_path)
 
 # %%
+cv2_imshow(img)
+
+# %%
+img.shape
+
+# %%
 warped = cv2.warpPerspective(img, M, (maxWidth, maxHeight))
 cv2_imshow(warped)
 
@@ -100,12 +118,28 @@ cv2_imshow(warped)
 warped_with_margine = cv2.copyMakeBorder(warped, 500, 500, 500, 500, cv2.BORDER_CONSTANT, None, value = [255, 255, 255])
 cv2_imshow(warped_with_margine)
 
-
 # %%
 M
 
 # %%
 all_player_labels
+
+# %%
+all_player_labels["Rxf"] = all_player_labels["xc"] * WIDTH_ORIGINAL
+all_player_labels["Ryf"] = (all_player_labels["yc"] + all_player_labels["h"] / 2) * HEIGHT_ORIGINAL
+all_player_labels
+
+# %%
+visualize_point_on_image(img, (all_player_labels.iloc[3]["Rxf"], all_player_labels.iloc[3]["Ryf"]))
+
+# %%
+all_player_labels
+
+# %%
+
+
+
+
 
 # %%
 # check frames that has less than 4
