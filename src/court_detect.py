@@ -3,12 +3,14 @@
 # %%
 import numpy as np
 import cv2
+from google.colab.patches import cv2_imshow
 from matplotlib import pyplot as plt
 from sympy import Line
 from itertools import combinations
 from court_reference import CourtReference
 import scipy.signal as sp
 import time
+from config import DATA_PATH
 
 # %%
 class CourtDetector:
@@ -260,7 +262,7 @@ class CourtDetector:
         if self.verbose:
             frame = self.frame.copy()
             court = self.add_court_overlay(frame, max_mat, (255, 0, 0))
-            cv2.imshow('court', court)
+            cv2_imshow('court', court)
             if cv2.waitKey(0) & 0xff == 27:
                 cv2.destroyAllWindows()
         print(f'Score = {max_score}')
@@ -424,7 +426,7 @@ class CourtDetector:
             # if less than 50 points were found detect court from the start instead of tracking
             if len(new_points) < 50:
                 if self.dist > 20:
-                    cv2.imshow('court', copy)
+                    cv2_imshow('court', copy)
                     if cv2.waitKey(0) & 0xff == 27:
                         cv2.destroyAllWindows()
                     self.detect(frame)
@@ -496,7 +498,7 @@ def display_lines_on_frame(frame, horizontal=(), vertical=()):
         cv2.circle(frame, (x1, y1), 1, (255, 0, 0), 2)
         cv2.circle(frame, (x2, y2), 1, (255, 0, 0), 2)
 
-    cv2.imshow('court', frame)
+    cv2_imshow('court', frame)
     if cv2.waitKey(0) & 0xff == 27:
         cv2.destroyAllWindows()
     # cv2.imwrite('../report/t.png', frame)
@@ -514,27 +516,60 @@ def display_lines_and_points_on_frame(frame, lines=(), points=(), line_color=(0,
     for p in points:
         frame = cv2.circle(frame, p, 2, point_color, 2)
 
-    cv2.imshow('court', frame)
+    cv2_imshow('court', frame)
     if cv2.waitKey(0) & 0xff == 27:
         cv2.destroyAllWindows()
     return frame
 
 # %%
-filename = '../images/img1.jpg'
-img = cv2.imread(filename)
+season = "22F"
+match_date = "20220908"
+court_number = "court1"
+match_number = "match1"
+
+# %%
+match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+file_name = match_path + "clip" + str(1) + "/frames/frame_8.jpg"
+
+# %%
+img = cv2.imread(file_name)
+cv2_imshow(img)
 
 # %%
 s = time.time()
 
 # %%
 court_detector = CourtDetector()
+
+# %%
 court_detector.detect(img, 0)
+
+# %%
 top, bottom = court_detector.get_extra_parts_location()
-cv2.circle(img, tuple(top), 3, (0,255,0), 1)
-cv2.circle(img, tuple(bottom), 3, (0,255,0), 1)
+
+# %%
+court_detector.track_court(img)
+
+# %%
+wraped_court = court_detector.get_warped_court()
+
+plt.imshow(wraped_court)
+# %%
+top
+
+# %%
+bottom
+
+# %%
+cv2.circle(img, tuple(top.astype(int)), 3, (0,255,0), 1)
+cv2.circle(img, tuple(bottom.astype(int)), 3, (0,255,0), 1)
 img[int(bottom[1]-10):int(bottom[1]+10), int(bottom[0] - 10):int(bottom[0]+10), :] = (0,0,0)
 img[int(top[1]-10):int(top[1]+10), int(top[0] - 10):int(top[0]+10), :] = (0,0,0)
-cv2.imshow('df', img)
+
+# %%
+cv2_imshow(img)
 if cv2.waitKey(0):
     cv2.destroyAllWindows()
+    
+# %%
 print(f'time = {time.time() - s}')
