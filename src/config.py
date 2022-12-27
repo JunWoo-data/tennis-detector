@@ -1,3 +1,8 @@
 # %%
 DATA_PATH = "/content/drive/MyDrive/ALT+TAB/data/"
+
 # %%
+WIDTH_ORIGINAL = 1280
+HEIGHT_ORIGINAL = 720
+WIDTH_RESIZE = 640
+HEIGHT_RESIZE = 360
