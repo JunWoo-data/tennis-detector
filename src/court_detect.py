@@ -2,6 +2,7 @@
 
 # %%
 import numpy as np
+import pandas as pd
 import cv2
 from google.colab.patches import cv2_imshow
 from matplotlib import pyplot as plt
@@ -528,8 +529,8 @@ def court_detect(season, match_date, court_number, match_number, frame_number = 
     
     frame = cv2.imread(frame_path)
     
-    court_detector = CourtDetector()
-    court_detector.detect(frame, 0)
+    #court_detector = CourtDetector()
+    #court_detector.detect(frame, 0)
     
     # visualize detected court
     # baseline top
@@ -609,21 +610,33 @@ def court_detect(season, match_date, court_number, match_number, frame_number = 
     cv2.destroyAllWindows()
     
     # save csv file about tennis line coordinate 
+    court_coordinates = pd.DataFrame([court_detector.baseline_top,
+                                      court_detector.baseline_bottom,
+                                      court_detector.top_inner_line,
+                                      court_detector.bottom_inner_line,
+                                      court_detector.left_court_line,
+                                      court_detector.right_court_line,
+                                      court_detector.left_inner_line,
+                                      court_detector.right_inner_line,
+                                      court_detector.middle_line,
+                                      court_detector.net], 
+                                      columns = ["x1", "y1", "x2", "y2"]
+                                    )
 
-# %%
-# %%
-# self.baseline_top = None - top_outer
-# self.baseline_bottom = None - bottom_outer
-# self.net = None - net
-# self.left_court_line = None - left_outer
-# self.right_court_line = None - right_outer
-# self.left_inner_line = None - left_inner
-# self.right_inner_line = None - right_inner
-# self.middle_line = None - middle
-# self.top_inner_line = None - top_inner
-# self.bottom_inner_line = None - bottom_inner
 
+    court_coordinates["type"] = ["top_outer", "bottom_outer", "top_inner", "bottom_inner", 
+                                 "left_outer", "right_outer", "left_inner", "right_inner",
+                                 "middle", "net"]
+
+    court_coordinates = court_coordinates[["type", "x1", "y1", "x2", "y2"]]
+    court_coordinates.to_csv(match_path + "court_coordinates.csv")
     
+    print("== Court coordinates saved for " + season + " / " + match_date + " / " + court_number + " / " + match_number + " :")
+    print("- save path: " + match_path + "court_coordinates.csv")
+    print("- file name: court_coordinates.csv")
+    print("- size: " + str(court_coordinates.shape))
+    print(" ")
+
 # %%
 season = "22F"
 match_date = "20220908"
@@ -631,106 +644,4 @@ court_number = "court1"
 match_number = "match1"
 
 # %%
-match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
-file_name = match_path + "clip" + str(1) + "/frames/frame_8.jpg"
-
-# %%
-img = cv2.imread(file_name)
-cv2_imshow(img)
-
-# %%
-court_detector = CourtDetector()
-court_detector.detect(img, 0)
-
-# %%
-# self.baseline_top = None
-# self.baseline_bottom = None
-# self.net = None
-# self.left_court_line = None
-# self.right_court_line = None
-# self.left_inner_line = None
-# self.right_inner_line = None
-# self.middle_line = None
-# self.top_inner_line = None
-# self.bottom_inner_line = None
-
-# %%
-def visualize_court_line(frame, court_detector):
-    # baseline top
-    line = court_detector.baseline_top
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    # baseline bottom
-    line = court_detector.baseline_bottom
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    # left court line
-    line = court_detector.left_court_line
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    # right court line
-    line = court_detector.right_court_line
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    # left inner line
-    line = court_detector.left_inner_line
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    # right inner line
-    line = court_detector.right_inner_line
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    # middle line
-    line = court_detector.middle_line
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    # top inner line
-    line = court_detector.top_inner_line
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    # bottom inner line
-    line = court_detector.bottom_inner_line
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    # net line
-    line = court_detector.net
-    start = line[:2]
-    end = line[2:]
-    
-    output = cv2.line(frame, tuple(start.astype(int)), tuple(end.astype(int)), (1, 0, 0), 3)
-    
-    cv2_imshow(output)
-    cv2.destroyAllWindows()
-
-# %%
-visualize_court_line(img, court_detector)
-
-
-# %%
+court_detect(season, match_date, court_number, match_number)
