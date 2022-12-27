@@ -13,6 +13,8 @@ match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_num
 player_labels_file_path = match_path + "/all_player_labels.csv"
 player_labels_file = pd.read_csv(player_labels_file_path)
 player_labels_file = player_labels_file[player_labels_file["label"].isin([0])] 
+
+# %%
 player_labels_file
 
 # %%
