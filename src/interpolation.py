@@ -1,5 +1,5 @@
 # %%
-from config import DATA_PATH
+from config import DATA_PATH, WIDTH_ORIGINAL, HEIGHT_ORIGINAL
 import pandas as pd
 
 # %%
@@ -10,12 +10,16 @@ match_number = "match1"
 
 # %%
 match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
-player_labels_file_path = match_path + "/all_player_labels.csv"
-player_labels_file = pd.read_csv(player_labels_file_path)
-player_labels_file = player_labels_file[player_labels_file["label"].isin([0])] 
+all_player_labels_path = match_path + "/all_player_labels.csv"
+all_player_labels = pd.read_csv(all_player_labels_path)
+all_player_labels = all_player_labels[all_player_labels["label"].isin([0])] 
 
 # %%
-player_labels_file
+all_player_labels
+
+# %%
+court_coordinates = pd.read_csv(match_path + "court_coordinates.csv")
+court_coordinates
 
 # %%
 # boundary 밖 사람은 제거
