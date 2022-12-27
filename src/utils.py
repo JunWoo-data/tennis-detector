@@ -133,7 +133,55 @@ def combine_player_detect_labels(season, match_date, court_number, match_number)
     print(" ")
 
 # %%
-def visualize_labels(season, match_date, court_number, match_number, clip_number, frame_range, label = [0, 1, 38]):
+def visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number, label = [0, 1, 38]):
+    match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+    labels_file_path = match_path + "/all_player_labels.csv"
+    frames_path = match_path + "/clip" + str(clip_number) + "/frames/"
+    
+    labels_file = pd.read_csv(labels_file_path)
+    labels_file = labels_file[(labels_file["label"].isin(label)) & 
+                              (labels_file["clip_number"] == clip_number) & 
+                              (labels_file["frame_number"] == frame_number)].sort_values("frame_number")
+    
+    print("== Visualize labels for: " + season + " / " + match_date + " / " + court_number + " / " + match_number + " / clip " + str(clip_number) + "/ frame " + str(frame_number) + " ==")
+    
+    img_path = frames_path + "frame_" + str(frame_number) + ".jpg"
+    frame = cv2.imread(img_path)
+    
+    for ri in range(labels_file.shape[0]):
+        label = labels_file.iloc[ri]["label"] 
+        
+        xc = labels_file.iloc[ri]["xc"] * frame.shape[1]
+        yc = labels_file.iloc[ri]["yc"] * frame.shape[0]
+        w = labels_file.iloc[ri]["w"] * frame.shape[1]
+        h = labels_file.iloc[ri]["h"] * frame.shape[0]
+        
+        x1 = (xc - w / 2) 
+        y1 = (yc - h / 2) 
+        x2 = (xc + w / 2) 
+        y2 = (yc + h / 2) 
+        
+        c1, c2 = (int(x1), int(y1)), (int(x2), int(y2))
+        t1 = round(0.002 * (frame.shape[0] + frame.shape[1]) / 2) + 1
+        
+        if label == 0: color = (255, 0, 0)
+        elif label == 1: color = (0, 255, 0)
+        else: color = (0, 0, 255)
+        
+        output = cv2.rectangle(frame, c1, c2, color, thickness = t1, lineType = cv2.LINE_AA)
+
+    cv2_imshow(output)
+
+# %%
+def visualize_labels_by_frame_range(season, match_date, court_number, match_number, clip_number, frame_range, label = [0, 1, 38]):
+    frame_start = frame_range[0]
+    frame_end = frame_range[1]
+    
+    for fn in range(frame_start, frame_end + 1):
+        visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, fn, label)
+
+# %%
+def visualize_labels_by_frame_range(season, match_date, court_number, match_number, clip_number, frame_range, label = [0, 1, 38]):
     match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
     labels_file_path = match_path + "/all_player_labels.csv"
     frames_path = match_path + "/clip" + str(clip_number) + "/frames/"
@@ -147,7 +195,12 @@ def visualize_labels(season, match_date, court_number, match_number, clip_number
                               (labels_file["clip_number"] == clip_number) & 
                               (labels_file["frame_number"].isin(range(frame_start, frame_end + 1)))].sort_values("frame_number")
 
+    print("== Visualize labels for: " + season + " / " + match_date + " / " + court_number + " / " + match_number + " / clip " + str(clip_number) + " ==")
+    print("- frames: " + str(frame_start) + " ~ " + str(frame_end))
+    print(" ")
+    
     for fn in range(frame_start, frame_end + 1):
+        print("- frame: " + str(fn))
         img_path = frames_path + "frame_" + str(fn) + ".jpg"
         frame = cv2.imread(img_path)
 
@@ -173,7 +226,7 @@ def visualize_labels(season, match_date, court_number, match_number, clip_number
             else: color = (0, 0, 255)
 
             output = cv2.rectangle(frame, c1, c2, color, thickness = t1, lineType = cv2.LINE_AA)
-    
+
         cv2_imshow(output)
     
     
@@ -204,7 +257,12 @@ match_number = "match1"
 
 # %%
 clip_number = 1
-frame_range = [0, 10]
+frame_range = [10, 20]
 label = [0]
 
-visualize_labels(season, match_date, court_number, match_number, clip_number, frame_range, label)
+# %%
+visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, 10, label)
+
+# %%
+visualize_labels_by_frame_range(season, match_date, court_number, match_number, clip_number, frame_range, label)
+# %%
