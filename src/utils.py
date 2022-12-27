@@ -106,22 +106,6 @@ def clips_to_frames(season, match_date, court_number, match_number):
         cv2.destroyAllWindows()
     
 # %%
-# clip_info_list = [["0:9", "0:21"], ["0:43", "0:58"], ["1:11", "1:23"], ["1:38", "1:50"], ["2:05", "2:10"], ["2:25", "2:31"], ["2:48", "2:56"], ["3:09", "3:17"],
-# ["3:33", "3:43"], ["3:55", "4:00"], ["4:22", "4:27"], ["4:45", "4:53"], ["5:09", "5:14"], ["5:31", "5:35"], ["5:59", "6:07"], ["6:21", "6:27"],
-# ["6:40", "6:46"], ["6:57", "7:10"], ["7:22", "7:36"], ["7:54", "8:08"], ["8:30", "8:56"], ["9:13", "9:35"], ["9:47", "10:04"], ["10:33", "10:48"],
-# ["11:00", "11:15"], ["11:31", "11:40"], ["11:53", "12:01"], ["13:06", "13:17"], ["13:30", "13:42"], ["13:52", "14:25"], ["14:39", "14:56"], ["15:09", "15:15"],
-# ["15:36", "15:56"], ["16:15", "16:23"], ["16:41", "16:47"], ["17:00", "17:14"], ["17:37", "17:42"], ["17:57", "18:08"], ["18:31", "18:37"], ["18:49", "18:55"],
-# ["19:06", "19:25"], ["19:40", "19:54"], ["20:10", "20:18"], ["20:36", "20:40"], ["20:53", "21:05"], ["21:16", "21:22"], ["21:32", "21:48"], ["22:00", "22:10"],
-# ["22:23", "22:37"], ["23:13", "23:32"], ["24:00", "24:07"], ["24:22", "24:29"], ["24:43", "24:57"], ["25:10", "25:18"], ["25:33", "25:51"], ["26:58", "27:20"],
-# ["27:50", "27:59"], ["28:13", "28:35"], ["28:53", "28:59"], ["29:16", "29:21"], ["29:39", "29:46"], ["29:57", "30:07"], ["30:27", "30:34"]]
-
-# %%
-# video_to_clip("https://youtu.be/AdmCmegtgc8", "22F", "20220908", "court1", "match1", clip_info_list)
-
-# %%
-# clips_to_frames( "22F", "20220908", "court1", "match1")
-
-# %%
 def combine_player_detect_labels(season, match_date, court_number, match_number):
     max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
     all_player_labels = pd.DataFrame(columns = ["clip_number", "frame_number", "label", "xc", "yc", "w", "h"])
@@ -140,23 +124,13 @@ def combine_player_detect_labels(season, match_date, court_number, match_number)
             player_labels = player_labels[["clip_number", "frame_number", "label", "xc", "yc", "w", "h"]]
 
             all_player_labels = all_player_labels.append(player_labels)
-
+    
     all_player_labels.to_csv(match_path + "all_player_labels.csv", index = False)
     print("== All player labels saved for " + season + " / " + match_date + " / " + court_number + " / " + match_number + " :")
     print("- save path: " + match_path + "all_player_labels.csv")
     print("- file name: all_player_labels.csv")
     print("- size: " + str(all_player_labels.shape))
     print(" ")
-
-# %%
-season = "22F"
-match_date = "20220908"
-court_number = "court1"
-match_number = "match1"
-
-# %%
-combine_player_detect_labels(season, match_date, court_number, match_number)
-
 
 # %%
 def visualize_labels(season, match_date, court_number, match_number, clip_number, frame_range, label = [0, 1, 38]):
@@ -202,105 +176,32 @@ def visualize_labels(season, match_date, court_number, match_number, clip_number
             ax.add_patch(rect)
     
     plt.show()
-# %%
-match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
-labels_file_path = match_path + "/all_player_labels.csv"
-labels_file = pd.read_csv(labels_file_path)
-clip_number = 1
-frames_path = match_path + "/clip" + str(clip_number) + "/frames/"
-frame_range = [8, 10]
-label = [0]
 
 # %%
-os.listdir(frames_path)
-# %%
-frame_start = frame_range[0]
-frame_end = frame_range[1]
+season = "22F"
+match_date = "20220908"
+court_number = "court1"
+match_number = "match1"
 
 # %%
-labels_file = labels_file[(labels_file["label"].isin(label)) & 
-                          (labels_file["clip_number"] == clip_number) & 
-                          (labels_file["frame_number"].isin(range(frame_start, frame_end + 1)))].sort_values("frame_number")
-
-labels_file
-# %%
-
-for fn in range(frame_start, frame_end + 1):
-    img_path = frames_path + "frame_" + str(fn) + ".jpg"
-    frame = cv2.imread(img_path)
-    
-    target_labels_file = labels_file[labels_file["frame_number"] == fn]
-    
-    for ri in range(target_labels_file.shape[0]):
-        label = target_labels_file.iloc[ri]["label"] 
-        xc = target_labels_file.iloc[ri]["xc"] * frame.shape[1]
-        yc = target_labels_file.iloc[ri]["yc"] * frame.shape[0]
-        w = target_labels_file.iloc[ri]["w"] * frame.shape[1]
-        h = target_labels_file.iloc[ri]["h"] * frame.shape[0]
-
-        x1 = (xc - w / 2) 
-        y1 = (yc - h / 2) 
-        x2 = (xc + w / 2) 
-        y2 = (yc + h / 2) 
-        
-        c1, c2 = (int(x1), int(y1)), (int(x2), int(y2))
-        t1 = round(0.002 * (frame.shape[0] + frame.shape[1]) / 2) + 1
-        
-        if label == 0: color = (1, 0, 0)
-        elif label == 1: color = (0, 1, 0)
-        else: color = (0, 0, 1)
-        
-        output = cv2.rectangle(frame, c1, c2, color, thickness = t1, lineType = cv2.LINE_AA)
-    
-    cv2_imshow(output)
-
+# clip_info_list = [["0:9", "0:21"], ["0:43", "0:58"], ["1:11", "1:23"], ["1:38", "1:50"], ["2:05", "2:10"], ["2:25", "2:31"], ["2:48", "2:56"], ["3:09", "3:17"],
+# ["3:33", "3:43"], ["3:55", "4:00"], ["4:22", "4:27"], ["4:45", "4:53"], ["5:09", "5:14"], ["5:31", "5:35"], ["5:59", "6:07"], ["6:21", "6:27"],
+# ["6:40", "6:46"], ["6:57", "7:10"], ["7:22", "7:36"], ["7:54", "8:08"], ["8:30", "8:56"], ["9:13", "9:35"], ["9:47", "10:04"], ["10:33", "10:48"],
+# ["11:00", "11:15"], ["11:31", "11:40"], ["11:53", "12:01"], ["13:06", "13:17"], ["13:30", "13:42"], ["13:52", "14:25"], ["14:39", "14:56"], ["15:09", "15:15"],
+# ["15:36", "15:56"], ["16:15", "16:23"], ["16:41", "16:47"], ["17:00", "17:14"], ["17:37", "17:42"], ["17:57", "18:08"], ["18:31", "18:37"], ["18:49", "18:55"],
+# ["19:06", "19:25"], ["19:40", "19:54"], ["20:10", "20:18"], ["20:36", "20:40"], ["20:53", "21:05"], ["21:16", "21:22"], ["21:32", "21:48"], ["22:00", "22:10"],
+# ["22:23", "22:37"], ["23:13", "23:32"], ["24:00", "24:07"], ["24:22", "24:29"], ["24:43", "24:57"], ["25:10", "25:18"], ["25:33", "25:51"], ["26:58", "27:20"],
+# ["27:50", "27:59"], ["28:13", "28:35"], ["28:53", "28:59"], ["29:16", "29:21"], ["29:39", "29:46"], ["29:57", "30:07"], ["30:27", "30:34"]]
 
 # %%
-img_path = frames_path + "frame_" + str(8) + ".jpg"
-frame = cv2.imread(img_path)
-frame.shape
+# video_to_clip("https://youtu.be/AdmCmegtgc8", "22F", "20220908", "court1", "match1", clip_info_list)
 
 # %%
-cv2_imshow(frame)
+# clips_to_frames( "22F", "20220908", "court1", "match1")
 
 # %%
-target_labels_file = labels_file[labels_file["frame_number"] == 8]
-target_labels_file
-
-# %%
-x = target_labels_file.iloc[4]["x1"]
-y = target_labels_file.iloc[4]["y1"]
-w = target_labels_file.iloc[4]["x2"]
-h = target_labels_file.iloc[4]["y2"]
-print(x, y, w, h)
-
-# %%
-x1 = x - (w / 2)
-y1 = y - (h / 2)
-x2 = x + (w / 2)
-y2 = y + (h / 2)
-print(x1, y1, x2, y2)
-
-# %%
-x1 = x1 * 1280
-y1 = y1 * 720
-x2 = x2 * 1280
-y2 = y2 * 720
-print(x1, y1, x2, y2)
-# %%
-c1, c2 = (int(x1), int(y1)), (int(x2), int(y2))
-t1 = round(0.002 * (frame.shape[0] + frame.shape[1]) / 2) + 1
-color = [random.randint(0, 255) for _ in range(3)]
-
-# %%
-output = cv2.rectangle(frame, c1, c2, color, thickness = t1, lineType = cv2.LINE_AA)
-cv2_imshow(output)
-
-# %%
-# def visualize_labels(season, match_date, court_number, match_number, clip_number, frame_range, label = [0, 1, 38])
+#combine_player_detect_labels(season, match_date, court_number, match_number)
 
 # %%
 
-temp["label"].isin([0])
-# %%
-temp[(temp.clip_number == 1) & (temp.frame_number == 0)]
+
