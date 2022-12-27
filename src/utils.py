@@ -181,6 +181,14 @@ def visualize_labels_by_frame_range(season, match_date, court_number, match_numb
         visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, fn, label)
 
 # %%
+# %%
+def visualize_point_on_image(img, coordinates):
+    cv2.circle(img, (int(coordinates[0]), int(coordinates[1])), 3, (0,255,0), 1)
+    img[int(coordinates[1]-10):int(coordinates[1]+10), int(coordinates[0] - 10):int(coordinates[0]+10), :] = (0,0,0)
+    cv2_imshow(img)
+    cv2.destroyAllWindows()
+
+# %%
 season = "22F"
 match_date = "20220908"
 court_number = "court1"
@@ -206,12 +214,13 @@ match_number = "match1"
 # combine_player_detect_labels(season, match_date, court_number, match_number)
 
 # %%
-clip_number = 1
+clip_number = 58
 frame_range = [10, 20]
+frame_number = 50
 label = [0]
 
 # %%
-visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, 10, label)
+visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number, label)
 
 # %%
 visualize_labels_by_frame_range(season, match_date, court_number, match_number, clip_number, frame_range, label)
