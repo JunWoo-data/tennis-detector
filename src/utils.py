@@ -220,8 +220,7 @@ frame_number = 0
 label = [0]
 
 # %%
-visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number, label)
+# visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number, label)
 
 # %%
-visualize_labels_by_frame_range(season, match_date, court_number, match_number, clip_number, frame_range, label)
-# %%
+# visualize_labels_by_frame_range(season, match_date, court_number, match_number, clip_number, frame_range, label)
