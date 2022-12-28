@@ -629,7 +629,7 @@ def court_detect(season, match_date, court_number, match_number, frame_number = 
                                  "middle", "net"]
 
     court_coordinates = court_coordinates[["type", "Rx1", "Ry1", "Rx2", "Ry2"]]
-    court_coordinates.to_csv(match_path + "court_coordinates.csv")
+    court_coordinates.to_csv(match_path + "court_coordinates.csv", index = False)
     
     print("== Court coordinates saved for " + season + " / " + match_date + " / " + court_number + " / " + match_number + " :")
     print("- save path: " + match_path + "court_coordinates.csv")
