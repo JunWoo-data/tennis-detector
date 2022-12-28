@@ -30,6 +30,9 @@ all_player_labels = pd.read_csv(all_player_labels_path)
 all_player_labels = all_player_labels[all_player_labels["label"].isin([0])] 
 
 # %%
+all_player_labels.reset_index(inplace = True)
+
+# %%
 all_player_labels
 
 # %%
@@ -136,10 +139,74 @@ visualize_point_on_image(img, (all_player_labels.iloc[3]["Rxf"], all_player_labe
 all_player_labels
 
 # %%
+list_downoids = all_player_labels[["Rxf", "Ryf"]].values.tolist()
+list_downoids
+
+# %%
+len(list_downoids)
+
+# %%
+list_points_to_detect = np.float32(list_downoids).reshape(-1, 1, 2)
+list_points_to_detect.shape
+
+# %%
+transformed_points = cv2.perspectiveTransform(list_points_to_detect, M)
+transformed_points
+
+# %%
+transformed_points.shape
+
+# %%
+transformed_points
+
+# %%
+transformed_points_df = pd.DataFrame(transformed_points.reshape(-1, 2), columns = ["RTxf", "RTyf"])
+transformed_points_df.shape
+
+# %%
+all_player_labels["RTxf"] = transformed_points_df["RTxf"]
+all_player_labels["RTyf"] = transformed_points_df["RTyf"]
+all_player_labels
 
 
 
+# %%
+court_coordinates
 
+# %%
+Tx1y1 = pd.DataFrame(cv2.perspectiveTransform(np.float32(court_coordinates[["x1", "y1"]].values.tolist()).reshape(-1, 1, 2), M).reshape(-1, 2), columns = ["Tx1", "Ty1"])
+
+# %%
+Tx2y2 = pd.DataFrame(cv2.perspectiveTransform(np.float32(court_coordinates[["x2", "y2"]].values.tolist()).reshape(-1, 1, 2), M).reshape(-1, 2), columns = ["Tx2", "Ty2"])
+
+# %%
+court_coordinates["Tx1"] = Tx1y1["Tx1"]
+court_coordinates["Ty1"] = Tx1y1["Ty1"]
+court_coordinates["Tx2"] = Tx2y2["Tx2"]
+court_coordinates["Ty2"] = Tx2y2["Ty2"]
+court_coordinates
+
+# %%
+warped.shape
+
+# %%
+temp_target_labels = all_player_labels[(all_player_labels["RTxf"] >= -100) & (all_player_labels["RTxf"] <= warped.shape[1] + 100) & (all_player_labels.frame_number == 0)]
+temp_target_labels
+
+# %%
+temp_target_labels_grouped = temp_target_labels.groupby(["clip_number", "frame_number"]).count().label
+temp_target_labels_grouped
+
+# %%
+temp_target_labels_grouped[temp_target_labels_grouped > 4]
+
+
+# %%
+temp_target_labels_grouped[temp_target_labels_grouped < 4]
+
+
+# %%
+all_player_labels[(all_player_labels.clip_number == 9) & (all_player_labels.frame_number == 0)]
 
 # %%
 # check frames that has less than 4

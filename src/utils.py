@@ -214,9 +214,9 @@ match_number = "match1"
 # combine_player_detect_labels(season, match_date, court_number, match_number)
 
 # %%
-clip_number = 58
+clip_number = 9
 frame_range = [10, 20]
-frame_number = 50
+frame_number = 0
 label = [0]
 
 # %%
