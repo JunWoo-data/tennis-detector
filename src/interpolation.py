@@ -1,8 +1,9 @@
 # %%
-from config import DATA_PATH, WIDTH_ORIGINAL, HEIGHT_ORIGINAL
+from config import DATA_PATH, WIDTH_ORIGINAL, HEIGHT_ORIGINAL, DEFAULT_NORMALIZED_WIDTH_FOR_BOX, DEFAULT_NORMALIZED_HEIGHT_FOR_BOX
 from utils import visualize_point_on_image
 import pandas as pd
 import numpy as np
+from scipy.spatial import distance_matrix
 import cv2
 from google.colab.patches import cv2_imshow
 
@@ -30,7 +31,7 @@ all_player_labels = pd.read_csv(all_player_labels_path)
 all_player_labels = all_player_labels[all_player_labels["label"].isin([0])] 
 
 # %%
-all_player_labels.reset_index(inplace = True)
+all_player_labels.reset_index(inplace = True, drop = True)
 
 # %%
 all_player_labels
@@ -41,29 +42,6 @@ court_coordinates
 
 # %%
 # boundary 밖 사람은 제거
-court_coordinates["type"].isin(["top_outer"])
-left_threshold = 
-
-# %%
-def compute_perspective_transform(corner_points,width,height,image):
-	""" Compute the transformation matrix
-	@ corner_points : 4 corner points selected from the image
-	@ height, width : size of the image
-	return : transformation matrix and the transformed image
-	"""
-	# Create an array out of the 4 corner points
-	corner_points_array = np.float32(corner_points)
- 
-	# Create an array with the parameters (the dimensions) required to build the matrix
-	img_params = np.float32([[0,0],[width,0],[0,height],[width,height]])
-	
-    # Compute and return the transformation matrix
-	matrix = cv2.getPerspectiveTransform(corner_points_array, img_params) 
-	img_transformed = cv2.warpPerspective(image,matrix,(width,height))
- 
-	return matrix,img_transformed
-
-# %%
 tl_x = court_coordinates[court_coordinates["type"] == "top_outer"]["x1"].values[0] 
 tl_y = court_coordinates[court_coordinates["type"] == "top_outer"]["y1"].values[0] 
 tl = (tl_x, tl_y)
@@ -190,31 +168,163 @@ court_coordinates
 warped.shape
 
 # %%
-temp_target_labels = all_player_labels[(all_player_labels["RTxf"] >= -100) & (all_player_labels["RTxf"] <= warped.shape[1] + 100) & (all_player_labels.frame_number == 0)]
-temp_target_labels
+reduced_player_labels = all_player_labels[(all_player_labels["RTxf"] >= -100) & (all_player_labels["RTxf"] <= warped.shape[1] + 100) & (all_player_labels.frame_number == 0)]
+reduced_player_labels
 
 # %%
-temp_target_labels_grouped = temp_target_labels.groupby(["clip_number", "frame_number"]).count().label
-temp_target_labels_grouped
+reduced_player_labels_grouped = reduced_player_labels.groupby(["clip_number", "frame_number"]).count().label
+reduced_player_labels_grouped
 
 # %%
-temp_target_labels_grouped[temp_target_labels_grouped > 4]
+gt_4 = reduced_player_labels_grouped[reduced_player_labels_grouped > 4].reset_index()
+gt_4
+
+# %%
+gt_4.shape
+
+# %%
+reduced_player_labels
+
+# %%
+# for i in range(gt_4.shape[0]):
+i = 0
+
+# %%
+target_clip_number = gt_4.iloc[i].clip_number
+target_frame_number = gt_4.iloc[i].frame_number
+
+target_labels = reduced_player_labels[(reduced_player_labels.clip_number == target_clip_number) & (reduced_player_labels.frame_number == target_frame_number)]
+target_labels 
+    
+# %%
+temp_df = target_labels[["RTxf", "RTyf"]]
+temp_df
+
+# %%
+temp_distance_df = pd.DataFrame(distance_matrix(temp_df.values, temp_df.values), index=temp_df.index, columns=temp_df.index)
+temp_distance_df
+
+# %%
+temp_distance_df < 10
 
 
 # %%
-temp_target_labels_grouped[temp_target_labels_grouped < 4]
+temp_distance_df.iloc[0, 1]
+# %%
+temp_distance_df.iloc[0].index
+
+# %%
+temp_distance_df.index
+
+# %%
+duplicated_index = {}
+for i in range(temp_distance_df.shape[0]):
+    duplicated_index_list = []
+    for j in range(i + 1, temp_distance_df.shape[0]):
+        if temp_distance_df.iloc[i, j] < 10: duplicated_index_list.append(temp_distance_df.iloc[0].index[j])
+    
+    duplicated_index[temp_distance_df.index[i]] = duplicated_index_list
+
+# %%
+duplicated_index
+
+# %%
+index_to_delete = []
+for v in duplicated_index.values():
+    index_to_delete.append(v)
+
+index_to_delete
+
+# %%
+index_to_delete = sum(index_to_delete, [])
+
+# %%
+index_to_delete
+
+# %%
+reduced_player_labels = reduced_player_labels[~reduced_player_labels.index.isin(index_to_delete)]
+
+# %%
+np.sum(reduced_player_labels.groupby(["clip_number", "frame_number"]).count().label > 4)
+
+##### lt_4 처리하기
+# %%
+lt_4 = reduced_player_labels_grouped[reduced_player_labels_grouped < 4].reset_index()
+lt_4
+
+# %%
+cv2_imshow(warped)
+
+# %%
+reduced_player_labels
+
+# %%
+player1_info = court_coordinates.loc[court_coordinates["type"] == "top_outer", ["x1", "y1"]]
+player2_info = court_coordinates.loc[court_coordinates["type"] == "top_outer", ["x2", "y2"]]
+player3_info = court_coordinates.loc[court_coordinates["type"] == "bottom_outer", ["x2", "y2"]]
+player4_info = court_coordinates.loc[court_coordinates["type"] == "bottom_outer", ["x1", "y1"]]
+
+# %%
+
+empty_player_assign_info = pd.DataFrame([player1_info.values[0], player2_info.values[0], player3_info.values[0], player4_info.values[0]], columns = ["Rxf", "Ryf"]) 
+empty_player_assign_info["player"] = ["player1", "player2", "player3", "player4"]
+empty_player_assign_info
+
+# %%
+empty_player_assign_info.loc[empty_player_assign_info["Rxf"] < 0, "Rxf"] = 0
+empty_player_assign_info.loc[empty_player_assign_info["Rxf"] > WIDTH_ORIGINAL, "Rxf"] = WIDTH_ORIGINAL
+empty_player_assign_info.loc[empty_player_assign_info["Ryf"] < 0, "Ryf"] = 0
+empty_player_assign_info.loc[empty_player_assign_info["Ryf"] > HEIGHT_ORIGINAL, "Ryf"] = HEIGHT_ORIGINAL
+empty_player_assign_info
+
+# %%
+list_downoids = empty_player_assign_info[["Rxf", "Ryf"]].values.tolist()
+list_points_to_detect = np.float32(list_downoids).reshape(-1, 1, 2)
+transformed_points = cv2.perspectiveTransform(list_points_to_detect, M)
+transformed_points_df = pd.DataFrame(transformed_points.reshape(-1, 2), columns = ["RTxf", "RTyf"])
+empty_player_assign_info["RTxf"] = transformed_points_df["RTxf"]
+empty_player_assign_info["RTyf"] = transformed_points_df["RTyf"]
+empty_player_assign_info
+
+# %%
+empty_player_assign_info.iloc[0]["RTxf"]
+
+# %%
+visualize_point_on_image(warped, (empty_player_assign_info.iloc[3]["RTxf"], empty_player_assign_info.iloc[3]["RTyf"]))
+
+# %%
+all_player_labels.describe()
+
+# %%
+DEFAULT_NORMALIZED_WIDTH_FOR_BOX = 0.038
+DEFAULT_NORMALIZED_HEIGHT_FOR_BOX = 0.17
+
+# %%
+empty_player_assign_info["xc"] = empty_player_assign_info["Rxf"] / WIDTH_ORIGINAL
+empty_player_assign_info["yc"] = empty_player_assign_info["Ryf"] / HEIGHT_ORIGINAL - DEFAULT_NORMALIZED_HEIGHT_FOR_BOX / 2 
+empty_player_assign_info["w"] = DEFAULT_NORMALIZED_WIDTH_FOR_BOX
+empty_player_assign_info["h"] = DEFAULT_NORMALIZED_HEIGHT_FOR_BOX
+empty_player_assign_info = empty_player_assign_info[["player", "xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]]
+empty_player_assign_info
 
 
 # %%
-all_player_labels[(all_player_labels.clip_number == 9) & (all_player_labels.frame_number == 0)]
+# for i in range(lt_4.shape[0])
+i = 0 
 
 # %%
-# check frames that has less than 4
+target_clip_number = lt_4.iloc[i].clip_number
+target_frame_number = lt_4.iloc[i].frame_number
 
-player_labels_grouped = player_labels_file.groupby(["clip_number", "frame_number"]).count().label
-player_labels_grouped
-# %%
-
-player_labels_grouped[player_labels_file.groupby(["clip_number", "frame_number"]).count().label < 4]
+target_labels = reduced_player_labels[(reduced_player_labels.clip_number == target_clip_number) & (reduced_player_labels.frame_number == target_frame_number)]
+target_labels 
 
 # %%
+court_coordinates
+
+# %%
+court_coordinates.loc[court_coordinates["type"] == "middle", "Tx1"].values[0]
+# %%
+target_labels["RTxf"] < 
+
+
