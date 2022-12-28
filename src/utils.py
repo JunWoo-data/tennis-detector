@@ -181,11 +181,12 @@ def visualize_labels_by_frame_range(season, match_date, court_number, match_numb
         visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, fn, label)
 
 # %%
-# %%
 def visualize_point_on_image(img, coordinates):
-    cv2.circle(img, (int(coordinates[0]), int(coordinates[1])), 3, (0,255,0), 1)
-    img[int(coordinates[1]-10):int(coordinates[1]+10), int(coordinates[0] - 10):int(coordinates[0]+10), :] = (0,0,0)
-    cv2_imshow(img)
+    img_copy = img.copy()
+    output = cv2.circle(img_copy, (int(coordinates[0]), int(coordinates[1])), 15, (0,255,0), 4)
+    
+    cv2_imshow(output)
+    cv2.waitKey(0)
     cv2.destroyAllWindows()
 
 # %%
