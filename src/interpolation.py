@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 from scipy.spatial import distance_matrix
 import cv2
+import matplotlib as mpl
+import matplotlib.pyplot as plt 
 from google.colab.patches import cv2_imshow
 
 
@@ -397,4 +399,103 @@ court_coordinates_enriched
 reduced_player_labels_frame_0 = make_reduced_player_labels(season, match_date, court_number, match_number)
 reduced_player_labels_frame_0
 
+# %%
+# for each clip 
+i = 1 
+
+# %%
+current_clip = reduced_player_labels_frame_0[reduced_player_labels_frame_0.clip_number == i]
+current_clip
+
+# %%
+current_clip = current_clip.sort_values(["player_by_location", "frame_number"])[["player_by_location", "frame_number", "Rxf", "Ryf"]]
+current_clip
+
+# %%
+tl = current_clip.loc[current_clip.player_by_location == "tl", ["frame_number", "Rxf", "Ryf"]]
+tr = current_clip.loc[current_clip.player_by_location == "tr", ["frame_number", "Rxf", "Ryf"]]
+bl = current_clip.loc[current_clip.player_by_location == "bl", ["frame_number", "Rxf", "Ryf"]]
+br = current_clip.loc[current_clip.player_by_location == "br", ["frame_number", "Rxf", "Ryf"]]
+
+# %%
+tl.index = tl.frame_number
+tr.index = tr.frame_number
+bl.index = bl.frame_number
+br.index = br.frame_number
+
+# %%
+fig, ax = plt.subplots(figsize = (20, 30))
+
+tl_fig = ax.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
+cbar_tl = plt.colorbar(tl_fig, shrink = 0.5)
+cbar_tl.set_label("tl_player")
+
+tr_fig = ax.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
+cbar_tr = plt.colorbar(tr_fig, shrink = 0.5)
+cbar_tr.set_label("tr_player")
+
+bl_fig = ax.scatter(bl["Rxf"], bl["Ryf"], c = bl.index, cmap = plt.cm.Greens, s=100, zorder=1)
+cbar_bl = plt.colorbar(bl_fig, shrink = 0.5)
+cbar_bl.set_label("bl_player")
+
+br_fig = ax.scatter(br["Rxf"], br["Ryf"], c = br.index, cmap = plt.cm.Greys, s=100, zorder=1)
+cbar_br = plt.colorbar(br_fig, shrink = 0.5)
+cbar_br.set_label("br_player")
+
+
+plt.imshow(frame_0)
+plt.show()
+
+# %%
+fig = plt.figure(figsize = (20, 10))
+
+ax = fig.add_subplot(111)
+
+axp = ax.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
+cb = plt.colorbar(axp, ax = [ax], location = "top", shrink = 0.5)
+
+axp = ax.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
+cb = plt.colorbar(axp, ax = [ax], location = "top", shrink = 0.5)
+
+plt.imshow(frame_0)
+plt.show()
+
+# %%
+
+
+tl_fig = ax.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
+cbar_tl = plt.colorbar(tl_fig, shrink = 0.5)
+cbar_tl.set_label("tl_player")
+
+tr_fig = ax.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
+cbar_tr = plt.colorbar(tr_fig, shrink = 0.5)
+cbar_tr.set_label("tr_player")
+
+bl_fig = ax.scatter(bl["Rxf"], bl["Ryf"], c = bl.index, cmap = plt.cm.Greens, s=100, zorder=1)
+cbar_bl = plt.colorbar(bl_fig, shrink = 0.5)
+cbar_bl.set_label("bl_player")
+
+br_fig = ax.scatter(br["Rxf"], br["Ryf"], c = br.index, cmap = plt.cm.Greys, s=100, zorder=1)
+cbar_br = plt.colorbar(br_fig, shrink = 0.5)
+cbar_br.set_label("br_player")
+
+
+plt.imshow(frame_0)
+plt.show()
+
+# %%
+plt.figure(figsize = (20,10))
+
+plt.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
+plt.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
+plt.scatter(bl["Rxf"], bl["Ryf"], c = bl.index, cmap = plt.cm.Greens, s=100, zorder=1)
+plt.scatter(br["Rxf"], br["Ryf"], c = br.index, cmap = plt.cm.Greys, s=100, zorder=1)
+plt.imshow(frame_0)
+plt.show()
+# %%
+cmap = plt.cm.get_cmap("Spectral")
+cmap
+
+# %%
+viridis = mpl.colormaps['viridis'].resampled(8)
 # %%
