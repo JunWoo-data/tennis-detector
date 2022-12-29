@@ -68,7 +68,13 @@ def video_to_clip(youtube_link, season, match_date, court_number, match_number, 
 def get_maximum_clip(season, match_date, court_number, match_number):
     base_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
     
-    return len(os.listdir(base_path))
+    return len(os.listdir(base_path)) - len(glob.glob(base_path + "*.*"))
+
+# %%
+def get_maximum_frame(season, match_date, court_number, match_number, clip_number):
+    base_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/clip" + str(clip_number) + "/frames/"
+    
+    return len(glob.glob(base_path + "*.jpg"))
 
 # %%
 def clips_to_frames(season, match_date, court_number, match_number):
