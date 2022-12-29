@@ -336,13 +336,39 @@ def make_reduced_player_labels(season, match_date, court_number, match_number):
             current_frame = current_frame.loc[player_to_be_added.keys(), :]
             reduced_player_labels_frame_0 = reduced_player_labels_frame_0.append(current_frame)
             
+            temp_4_lag = reduced_player_labels_frame_0[reduced_player_labels_frame_0.clip_number == i].sort_values(["clip_number", "player_by_location", "frame_number"])
+            temp_4_lag["xc_lag_1"] = temp_4_lag["xc"].shift(1)
+            temp_4_lag["yc_lag_1"] = temp_4_lag["yc"].shift(1)
+            temp_4_lag["w_lag_1"] = temp_4_lag["w"].shift(1)
+            temp_4_lag["h_lag_1"] = temp_4_lag["h"].shift(1)
+            temp_4_lag["Rxf_lag_1"] = temp_4_lag["Rxf"].shift(1)
+            temp_4_lag["Ryf_lag_1"] = temp_4_lag["Ryf"].shift(1)
+            temp_4_lag["RTxf_lag_1"] = temp_4_lag["RTxf"].shift(1)
+            temp_4_lag["RTyf_lag_1"] = temp_4_lag["RTyf"].shift(1)
+            temp_4_lag["distance"] = np.sqrt(np.square(temp_4_lag["RTxf"] - temp_4_lag["RTxf_lag_1"]) + np.square(temp_4_lag["RTyf"] - temp_4_lag["RTyf_lag_1"]))
+            temp_4_lag.loc[temp_4_lag["frame_number"] == 0, "distance"] = 0
+
+            target_index = temp_4_lag[temp_4_lag.distance > 300].sort_values("distance").index
+
+            print("- Number of frames that have labels farther than 300 from labels of before frame: ", len(target_index))  
+
+            target_values = temp_4_lag.loc[temp_4_lag.index.isin(target_index), 
+                                          ["xc_lag_1", "yc_lag_1", "w_lag_1", "h_lag_1", "Rxf_lag_1", "Ryf_lag_1", "RTxf_lag_1", "RTyf_lag_1"]]      
+
+            reduced_player_labels_frame_0.loc[reduced_player_labels_frame_0.index.isin(target_index), 
+                                              ["xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]] = target_values
+            
+            
             before_frame = reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["clip_number"] == i) & 
                                                  (reduced_player_labels_frame_0["frame_number"] == j), 
                                                  ["clip_number", "frame_number", "Rxf", "Ryf", "RTxf", "RTyf", "player_by_location"]]
 
             
         print("!!! (check) count player_by_location is null", np.sum(reduced_player_labels_frame_0.player_by_location.isnull()))
-
+        print("== (step2) finish ==")
+        print("")
+        
+        
     return reduced_player_labels_frame_0
 
 #%%
@@ -554,7 +580,32 @@ reduced_player_labels_frame_0 = make_reduced_player_labels(season, match_date, c
 reduced_player_labels_frame_0
 
 # %%
-reduced_player_labels_frame_0[reduced_player_labels_frame_0.clip_number == 1].sort_values(["clip_number", "player_by_location", "frame_number"])[["clip_number", "player_by_location"]]
+temp_4_lag = reduced_player_labels_frame_0.sort_values(["clip_number", "player_by_location", "frame_number"])
+temp_4_lag
+
+# %%
+temp_4_lag["xc_lag_1"] = temp_4_lag["xc"].shift(1)
+temp_4_lag["yc_lag_1"] = temp_4_lag["yc"].shift(1)
+temp_4_lag["w_lag_1"] = temp_4_lag["w"].shift(1)
+temp_4_lag["h_lag_1"] = temp_4_lag["h"].shift(1)
+temp_4_lag["Rxf_lag_1"] = temp_4_lag["Rxf"].shift(1)
+temp_4_lag["Ryf_lag_1"] = temp_4_lag["Ryf"].shift(1)
+temp_4_lag["RTxf_lag_1"] = temp_4_lag["RTxf"].shift(1)
+temp_4_lag["RTyf_lag_1"] = temp_4_lag["RTyf"].shift(1)
+temp_4_lag
+
+# %%
+temp_4_lag["distance"] = np.sqrt(np.square(temp_4_lag["RTxf"] - temp_4_lag["RTxf_lag_1"]) + np.square(temp_4_lag["RTyf"] - temp_4_lag["RTyf_lag_1"]))
+temp_4_lag.loc[temp_4_lag["frame_number"] == 0, "distance"] = 0
+temp_4_lag
+
+# %%
+temp_4_lag[(temp_4_lag.clip_number == 8) & (temp_4_lag.frame_number == 130)]
+
+# %%
+temp_4_lag[temp_4_lag.distance > 150].sort_values("distance")
+
+
 
 
 
@@ -565,8 +616,8 @@ reduced_player_labels_frame_0[reduced_player_labels_frame_0.clip_number == 1].so
 # clip8 - 130 : 150
 
 # %%
-i = 1
-j = 299
+i = 30
+j = 745
 # %%
 current_clip = all_player_labels_enriched[all_player_labels_enriched["clip_number"] == i]
         
@@ -582,8 +633,8 @@ temp_distance_df = pd.DataFrame(distance_matrix(before_frame[["RTxf", "RTyf"]], 
 temp_distance_df
 
 # %%
-target_before = "bl"
-target_current = 1341
+target_before = "tl"
+target_current = 54556
 
 # %%
 before_coordinate = (before_frame.loc[before_frame["player_by_location"] == target_before, "Rxf"].values[0],
@@ -604,4 +655,22 @@ visualize_labels_of_frame(season, match_date, court_number, match_number, clip_n
 # %%
 reduced_player_labels_frame_0[(reduced_player_labels_frame_0.clip_number == i) & (reduced_player_labels_frame_0.frame_number == j)]
 
+# %%
+target_index = temp_4_lag[temp_4_lag.distance > 300].sort_values("distance").index
+target_index
+
+# %%
+target_values = temp_4_lag.loc[temp_4_lag.index.isin(target_index), 
+                              ["xc_lag_1", "yc_lag_1", "w_lag_1", "h_lag_1", "Rxf_lag_1", "Ryf_lag_1", "RTxf_lag_1", "RTyf_lag_1"]]
+
+
+# %%
+reduced_player_labels_frame_0.loc[reduced_player_labels_frame_0.index.isin(target_index), 
+                                  ["xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]] = target_values
+# %%
+reduced_player_labels_frame_0
+# %%
+len(target_index)
+# %%
+temp_4_lag.loc[temp_4_lag.distance > 300, ["clip_number", "player_by_location", "frame_number", "RTxf", "RTyf"]].sort_values(["clip_number", "player_by_location", "frame_number", "RTxf", "RTyf"])
 # %%
