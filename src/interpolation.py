@@ -1,6 +1,6 @@
 # %%
 from config import DATA_PATH, WIDTH_ORIGINAL, HEIGHT_ORIGINAL, DEFAULT_NORMALIZED_WIDTH_FOR_BOX, DEFAULT_NORMALIZED_HEIGHT_FOR_BOX
-from utils import visualize_point_on_image
+from utils import visualize_point_on_image, visualize_labels_of_frame, get_maximum_clip, get_maximum_frame
 import pandas as pd
 import numpy as np
 from scipy.spatial import distance_matrix
@@ -10,19 +10,27 @@ from google.colab.patches import cv2_imshow
 
 # %%
 # TODO: Delete
-def visualize_point_on_image(img, coordinates):
-    img_copy = img.copy()
-    output = cv2.circle(img_copy, (int(coordinates[0]), int(coordinates[1])), 15, (0,255,0), 4)
+# def visualize_point_on_image(img, coordinates):
+#     img_copy = img.copy()
+#     output = cv2.circle(img_copy, (int(coordinates[0]), int(coordinates[1])), 15, (0,255,0), 4)
     
-    cv2_imshow(output)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    
+#     cv2_imshow(output)
+#     cv2.waitKey(0)
+#     cv2.destroyAllWindows()
+
 # %%
-season = "22F"
-match_date = "20220908"
-court_number = "court1"
-match_number = "match1"
+# TODO: delete
+# import glob
+
+# def get_maximum_clip(season, match_date, court_number, match_number):
+#     base_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+    
+#     return len(os.listdir(base_path)) - len(glob.glob(base_path + "*.*"))
+
+# def get_maximum_frame(season, match_date, court_number, match_number, clip_number):
+#     base_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/clip" + str(clip_number) + "/frames/"
+    
+#     return len(glob.glob(base_path + "*.jpg"))
 
 # %%
 def find_coordinate_transform_matrix(season, match_date, court_number, match_number):
@@ -133,14 +141,14 @@ def make_empty_player_assign_info(season, match_date, court_number, match_number
     
     M, warped = find_coordinate_transform_matrix(season, match_date, court_number, match_number)
     
-    player1_info = court_coordinates.loc[court_coordinates["type"] == "top_outer", ["Rx1", "Ry1"]]
-    player2_info = court_coordinates.loc[court_coordinates["type"] == "top_outer", ["Rx2", "Ry2"]]
-    player3_info = court_coordinates.loc[court_coordinates["type"] == "bottom_outer", ["Rx2", "Ry2"]]
-    player4_info = court_coordinates.loc[court_coordinates["type"] == "bottom_outer", ["Rx1", "Ry1"]]
+    tl_player_info = court_coordinates.loc[court_coordinates["type"] == "top_outer", ["Rx1", "Ry1"]]
+    tr_player_info = court_coordinates.loc[court_coordinates["type"] == "top_outer", ["Rx2", "Ry2"]]
+    br_player_info = court_coordinates.loc[court_coordinates["type"] == "bottom_outer", ["Rx2", "Ry2"]]
+    bl_player_info = court_coordinates.loc[court_coordinates["type"] == "bottom_outer", ["Rx1", "Ry1"]]
     
-    empty_player_assign_info = pd.DataFrame([player1_info.values[0], player2_info.values[0], player3_info.values[0], player4_info.values[0]], 
+    empty_player_assign_info = pd.DataFrame([tl_player_info.values[0], tr_player_info.values[0], br_player_info.values[0], bl_player_info.values[0]], 
                                             columns = ["Rxf", "Ryf"]) 
-    empty_player_assign_info["player"] = ["player1", "player2", "player3", "player4"]
+    empty_player_assign_info["player_by_location"] = ["tl", "tr", "br", "bl"]
     
     empty_player_assign_info.loc[empty_player_assign_info["Rxf"] < 0, "Rxf"] = 0
     empty_player_assign_info.loc[empty_player_assign_info["Rxf"] > WIDTH_ORIGINAL, "Rxf"] = WIDTH_ORIGINAL
@@ -158,27 +166,202 @@ def make_empty_player_assign_info(season, match_date, court_number, match_number
     empty_player_assign_info["yc"] = empty_player_assign_info["Ryf"] / HEIGHT_ORIGINAL - DEFAULT_NORMALIZED_HEIGHT_FOR_BOX / 2 
     empty_player_assign_info["w"] = DEFAULT_NORMALIZED_WIDTH_FOR_BOX
     empty_player_assign_info["h"] = DEFAULT_NORMALIZED_HEIGHT_FOR_BOX
-    empty_player_assign_info = empty_player_assign_info[["player", "xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]]
+    empty_player_assign_info = empty_player_assign_info[["player_by_location", "xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]]
     
     return empty_player_assign_info
     
 # %%
+# def make_reduced_player_labels(season, match_date, court_number, match_number):
+#     print(f"== season: {season} / match date: {match_date} / court number: {court_number} / match_number: {match_number} ==")
+    
+#     ## 1) make reduced_player_labels_frame_0
+#     print("")
+#     print("== (Step1) Make all frame 0 for each clip to have exactly 4 players ==")
+    
+#     M, warped = find_coordinate_transform_matrix(season, match_date, court_number, match_number)
+#     all_player_labels_enriched = make_all_player_labels_enrichment(season, match_date, court_number, match_number)
+#     court_coordinates_enriched = make_court_coordinates_enrichment(season, match_date, court_number, match_number)
+    
+#     reduced_player_labels_frame_0 = all_player_labels_enriched[(all_player_labels_enriched["RTxf"] >= -100) & 
+#                                                                (all_player_labels_enriched["RTxf"] <= warped.shape[1] + 100) & 
+#                                                                (all_player_labels_enriched.frame_number == 0)]
+    
+#     print("- all_player_labels_enriched shape: ", all_player_labels_enriched.shape)
+#     print("- reduced_player_labels_frame_0 shape: ", reduced_player_labels_frame_0.shape)
+    
+#     temp_grouped = reduced_player_labels_frame_0.groupby(["clip_number", "frame_number"]).count().label
+#     gt_4 = temp_grouped[temp_grouped > 4].reset_index() # clip, frames list that have more than 4 players -> we will delete detected player that is not real player
+#     lt_4 = temp_grouped[temp_grouped < 4].reset_index() # clip, frames list that have less than 4 players -> we will fill arbitrary player at emty corner
+    
+#     print("- gt_4 cases: ", gt_4.shape[0])
+#     print("- lt_4 cases: ", lt_4.shape[0])
+#     print("")
+    
+#     # handle gt_4 cases
+#     print("-- Handling greater than 4 players cases...")
+#     for i in range(gt_4.shape[0]):
+#         target_clip_number = gt_4.iloc[i].clip_number
+#         target_frame_number = gt_4.iloc[i].frame_number
+        
+#         print(f"- clip number: {target_clip_number} / frame number: {target_frame_number}")
+
+#         target_labels = reduced_player_labels_frame_0[(reduced_player_labels_frame_0.clip_number == target_clip_number) & 
+#                                                       (reduced_player_labels_frame_0.frame_number == target_frame_number)]
+        
+#         temp_df = target_labels[["RTxf", "RTyf"]]
+#         temp_distance_df = pd.DataFrame(distance_matrix(temp_df.values, temp_df.values), index=temp_df.index, columns=temp_df.index)
+        
+#         duplicated_index = {}
+#         for j in range(temp_distance_df.shape[0]):
+#             duplicated_index_list = []
+#             for k in range(j + 1, temp_distance_df.shape[0]):
+#                 if temp_distance_df.iloc[j, k] < 10: duplicated_index_list.append(temp_distance_df.iloc[0].index[k])
+
+#             duplicated_index[temp_distance_df.index[j]] = duplicated_index_list
+        
+#         print("- duplicated cases: ", duplicated_index)
+        
+#         index_to_delete = []
+        
+#         for v in duplicated_index.values():
+#             index_to_delete.append(v)
+        
+#         index_to_delete = sum(index_to_delete, [])
+
+#     reduced_player_labels_frame_0 = reduced_player_labels_frame_0[~reduced_player_labels_frame_0.index.isin(index_to_delete)]
+    
+#     print("- reduced_player_labels_frame_0 shape after handling gt_4 cases: ", reduced_player_labels_frame_0.shape)
+#     print("")
+    
+#     # handle lt_4 cases
+#     print("-- Handling less than 4 players cases... --")
+    
+#     empty_player_assign_info = make_empty_player_assign_info(season, match_date, court_number, match_number)
+    
+#     for i in range(lt_4.shape[0]):
+#         target_clip_number = lt_4.iloc[i].clip_number
+#         target_frame_number = lt_4.iloc[i].frame_number
+        
+#         print(f"- clip number: {target_clip_number} / frame number: {target_frame_number}")
+
+#         target_labels = reduced_player_labels_frame_0[(reduced_player_labels_frame_0.clip_number == target_clip_number) & 
+#                                                       (reduced_player_labels_frame_0.frame_number == target_frame_number)]
+        
+#         target_empty_player_assign_info = empty_player_assign_info.copy()
+#         target_empty_player_assign_info["clip_number"] = target_clip_number
+#         target_empty_player_assign_info["frame_number"] = target_frame_number
+#         target_empty_player_assign_info["label"] = 0
+#         target_empty_player_assign_info = target_empty_player_assign_info[["player_by_location", "clip_number", "frame_number", "label", "xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]]
+        
+#         x_threshold = court_coordinates_enriched.loc[court_coordinates_enriched["type"] == "middle", "RTx1"].values[0]
+#         y_threshold = court_coordinates_enriched.loc[court_coordinates_enriched["type"] == "net", "RTy1"].values[0]
+        
+#         player_to_be_added = []
+#         if target_labels[(target_labels["RTxf"] < x_threshold) & (target_labels["RTyf"] < y_threshold)].shape[0] == 0: player_to_be_added.append("tl")
+#         elif target_labels[(target_labels["RTxf"] > x_threshold) & (target_labels["RTyf"] < y_threshold)].shape[0] == 0: player_to_be_added.append("tr")
+#         elif target_labels[(target_labels["RTxf"] > x_threshold) & (target_labels["RTyf"] > y_threshold)].shape[0] == 0: player_to_be_added.append("br")
+#         elif target_labels[(target_labels["RTxf"] < x_threshold) & (target_labels["RTyf"] > y_threshold)].shape[0] == 0: player_to_be_added.append("bl")
+        
+#         print("- empty player: ", player_to_be_added)
+        
+#         df_to_be_added = target_empty_player_assign_info[target_empty_player_assign_info["player_by_location"].isin(player_to_be_added)].iloc[:, 1:]
+        
+#         reduced_player_labels_frame_0 = reduced_player_labels_frame_0.append(df_to_be_added).reset_index(drop = True)
+        
+#     print("- reduced_player_labels_frame_0 shape after handling lt_4 cases: ", reduced_player_labels_frame_0.shape)
+#     print("")
+    
+#     print("!!! (check) count labeld players for each frame for every clip is not 4", np.sum(reduced_player_labels_frame_0.groupby(["clip_number", "frame_number"]).count().label != 4))
+#     print("== (step1) finish ==")
+#     print("")
+    
+#     ## 2) make reduced_player_labels
+#     print("== (step2) Make all other frames for each clip to have exactly 4 players ==")
+    
+#     reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["RTxf"] < x_threshold) & 
+#                                       (reduced_player_labels_frame_0["RTyf"] < y_threshold), "player_by_location"] = "tl"
+#     reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["RTxf"] > x_threshold) & 
+#                                       (reduced_player_labels_frame_0["RTyf"] < y_threshold), "player_by_location"] = "tr"
+#     reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["RTxf"] > x_threshold) & 
+#                                       (reduced_player_labels_frame_0["RTyf"] > y_threshold), "player_by_location"] = "br"
+#     reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["RTxf"] < x_threshold) & 
+#                                       (reduced_player_labels_frame_0["RTyf"] > y_threshold), "player_by_location"] = "bl"
+    
+#     print("!!! (check) count player_by_location is null", np.sum(reduced_player_labels_frame_0.player_by_location.isnull()))
+    
+    
+#     max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
+    
+#     for i in range(1, max_clip_number + 1):
+#         print(f"-- clip: {i}")
+        
+#         current_clip = all_player_labels_enriched[all_player_labels_enriched["clip_number"] == i]
+        
+#         before_frame = reduced_player_labels_frame_0.loc[reduced_player_labels_frame_0["clip_number"] == i, 
+#                                                          ["clip_number", "frame_number", "Rxf", "Ryf", "RTxf", "RTyf", "player_by_location"]]
+
+#         max_frame_number = get_maximum_frame(season, match_date, court_number, match_number, i)
+
+#         for j in range(1, max_frame_number):
+#             #print("frame: ", j)
+            
+#             current_frame = current_clip[current_clip["frame_number"] == j]
+            
+#             temp_distance_df = pd.DataFrame(distance_matrix(before_frame[["RTxf", "RTyf"]], current_frame[["RTxf", "RTyf"]]), 
+#                                             index = before_frame.player_by_location, columns=current_frame.index)
+            
+#             player_to_be_added = {}
+            
+#             for k in range(4):
+#                 #print("temp_distance_df shape: ", temp_distance_df.shape)
+#                 #display(temp_distance_df)
+#                 min_index = np.argmin(temp_distance_df)
+#                 #print("min_index: ", min_index)
+#                 r, c = divmod(min_index, temp_distance_df.shape[1])
+#                 #print("r, c: ", (r, c))
+                
+#                 player_to_be_added[temp_distance_df.columns[c]] = temp_distance_df.index[r]
+#                 temp_distance_df = temp_distance_df.loc[temp_distance_df.index != temp_distance_df.index[r], 
+#                                                         ~temp_distance_df.columns.isin([temp_distance_df.columns[c]])]
+
+    
+    
+#             current_frame.loc[player_to_be_added.keys(), "player_by_location"] = list(player_to_be_added.values())
+#             current_frame = current_frame.loc[player_to_be_added.keys(), :]
+#             reduced_player_labels_frame_0 = reduced_player_labels_frame_0.append(current_frame)
+            
+#             before_frame = reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["clip_number"] == i) & 
+#                                                  (reduced_player_labels_frame_0["frame_number"] == j), 
+#                                                  ["clip_number", "frame_number", "Rxf", "Ryf", "RTxf", "RTyf", "player_by_location"]]
+
+            
+#         print("!!! (check) count player_by_location is null", np.sum(reduced_player_labels_frame_0.player_by_location.isnull()))
+
+#     return reduced_player_labels_frame_0
+
+#%%
 def make_reduced_player_labels(season, match_date, court_number, match_number):
     print(f"== season: {season} / match date: {match_date} / court number: {court_number} / match_number: {match_number} ==")
     
     ## 1) make reduced_player_labels_frame_0
+    print("")
+    print("== (Step1) Make all frame 0 for each clip to have exactly 4 players ==")
+    
     M, warped = find_coordinate_transform_matrix(season, match_date, court_number, match_number)
     all_player_labels_enriched = make_all_player_labels_enrichment(season, match_date, court_number, match_number)
     court_coordinates_enriched = make_court_coordinates_enrichment(season, match_date, court_number, match_number)
     
-    reduced_player_labels_frame_0 = all_player_labels_enriched[(all_player_labels_enriched["RTxf"] >= -100) & 
-                                                               (all_player_labels_enriched["RTxf"] <= warped.shape[1] + 100) & 
-                                                               (all_player_labels_enriched.frame_number == 0)]
+    print("- first all_player_labels_enriched shape: ", all_player_labels_enriched.shape)
     
-    print("- all_player_labels_enriched shape: ", all_player_labels_enriched.shape)
-    print("- reduced_player_labels_frame_0 shape: ", reduced_player_labels_frame_0.shape)
+    all_player_labels_enriched = all_player_labels_enriched[(all_player_labels_enriched["RTxf"] >= -100) & 
+                                                            (all_player_labels_enriched["RTxf"] <= warped.shape[1] + 100)]
+                                                
     
-    temp_grouped = reduced_player_labels_frame_0.groupby(["clip_number", "frame_number"]).count().label
+    print("- all_player_labels_enriched shape after delete labels out of boundary: ", all_player_labels_enriched.shape)
+    
+    all_player_labels_enriched = all_player_labels_enriched.sort_values(["clip_number", "frame_number"])
+    
+    temp_grouped = all_player_labels_enriched.groupby(["clip_number", "frame_number"]).count().label
     gt_4 = temp_grouped[temp_grouped > 4].reset_index() # clip, frames list that have more than 4 players -> we will delete detected player that is not real player
     lt_4 = temp_grouped[temp_grouped < 4].reset_index() # clip, frames list that have less than 4 players -> we will fill arbitrary player at emty corner
     
@@ -194,8 +377,8 @@ def make_reduced_player_labels(season, match_date, court_number, match_number):
         
         print(f"- clip number: {target_clip_number} / frame number: {target_frame_number}")
 
-        target_labels = reduced_player_labels_frame_0[(reduced_player_labels_frame_0.clip_number == target_clip_number) & 
-                                                      (reduced_player_labels_frame_0.frame_number == target_frame_number)]
+        target_labels = all_player_labels_enriched[(all_player_labels_enriched.clip_number == target_clip_number) & 
+                                                    (all_player_labels_enriched.frame_number == target_frame_number)]
         
         temp_df = target_labels[["RTxf", "RTyf"]]
         temp_distance_df = pd.DataFrame(distance_matrix(temp_df.values, temp_df.values), index=temp_df.index, columns=temp_df.index)
@@ -216,10 +399,14 @@ def make_reduced_player_labels(season, match_date, court_number, match_number):
             index_to_delete.append(v)
         
         index_to_delete = sum(index_to_delete, [])
-
-    reduced_player_labels_frame_0 = reduced_player_labels_frame_0[~reduced_player_labels_frame_0.index.isin(index_to_delete)]
+        all_player_labels_enriched = all_player_labels_enriched[~all_player_labels_enriched.index.isin(index_to_delete)]
     
-    print("- reduced_player_labels_frame_0 shape after handling gt_4 cases: ", reduced_player_labels_frame_0.shape)
+    print("- all_player_labels_enriched shape after handling gt_4 cases: ", all_player_labels_enriched.shape)
+    
+    temp_grouped = all_player_labels_enriched.groupby(["clip_number", "frame_number"]).count().label
+    gt_4 = temp_grouped[temp_grouped > 4].reset_index()
+    
+    print("- gt_4 cases after handle gt_ cases: ", gt_4.shape[0])
     print("")
     
     # handle lt_4 cases
@@ -233,35 +420,183 @@ def make_reduced_player_labels(season, match_date, court_number, match_number):
         
         print(f"- clip number: {target_clip_number} / frame number: {target_frame_number}")
 
-        target_labels = reduced_player_labels_frame_0[(reduced_player_labels_frame_0.clip_number == target_clip_number) & 
-                                                      (reduced_player_labels_frame_0.frame_number == target_frame_number)]
+        target_labels = all_player_labels_enriched[(all_player_labels_enriched.clip_number == target_clip_number) & 
+                                                    (all_player_labels_enriched.frame_number == target_frame_number)]
         
         target_empty_player_assign_info = empty_player_assign_info.copy()
         target_empty_player_assign_info["clip_number"] = target_clip_number
         target_empty_player_assign_info["frame_number"] = target_frame_number
         target_empty_player_assign_info["label"] = 0
-        target_empty_player_assign_info = target_empty_player_assign_info[["player", "clip_number", "frame_number", "label", "xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]]
+        target_empty_player_assign_info = target_empty_player_assign_info[["player_by_location", "clip_number", "frame_number", "label", "xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]]
         
         x_threshold = court_coordinates_enriched.loc[court_coordinates_enriched["type"] == "middle", "RTx1"].values[0]
         y_threshold = court_coordinates_enriched.loc[court_coordinates_enriched["type"] == "net", "RTy1"].values[0]
         
         player_to_be_added = []
-        if target_labels[(target_labels["RTxf"] < x_threshold) & (target_labels["RTyf"] < y_threshold)].shape[0] == 0: player_to_be_added.append("player1")
-        elif target_labels[(target_labels["RTxf"] > x_threshold) & (target_labels["RTyf"] < y_threshold)].shape[0] == 0: player_to_be_added.append("player2")
-        elif target_labels[(target_labels["RTxf"] > x_threshold) & (target_labels["RTyf"] > y_threshold)].shape[0] == 0: player_to_be_added.append("player3")
-        elif target_labels[(target_labels["RTxf"] < x_threshold) & (target_labels["RTyf"] > y_threshold)].shape[0] == 0: player_to_be_added.append("player4")
+        if target_labels[(target_labels["RTxf"] < x_threshold) & (target_labels["RTyf"] < y_threshold)].shape[0] == 0: player_to_be_added.append("tl")
+        elif target_labels[(target_labels["RTxf"] > x_threshold) & (target_labels["RTyf"] < y_threshold)].shape[0] == 0: player_to_be_added.append("tr")
+        elif target_labels[(target_labels["RTxf"] > x_threshold) & (target_labels["RTyf"] > y_threshold)].shape[0] == 0: player_to_be_added.append("br")
+        elif target_labels[(target_labels["RTxf"] < x_threshold) & (target_labels["RTyf"] > y_threshold)].shape[0] == 0: player_to_be_added.append("bl")
         
         print("- empty player: ", player_to_be_added)
         
-        df_to_be_added = target_empty_player_assign_info[target_empty_player_assign_info["player"].isin(player_to_be_added)].iloc[:, 1:]
+        df_to_be_added = target_empty_player_assign_info[target_empty_player_assign_info["player_by_location"].isin(player_to_be_added)].iloc[:, 1:]
         
-        reduced_player_labels_frame_0 = reduced_player_labels_frame_0.append(df_to_be_added).reset_index(drop = True)
+        all_player_labels_enriched = all_player_labels_enriched.append(df_to_be_added).reset_index(drop = True)
         
-    print("- reduced_player_labels_frame_0 shape after handling lt_4 cases: ", reduced_player_labels_frame_0.shape)
+    print("- all_player_labels_enriched shape after handling lt_4 cases: ", all_player_labels_enriched.shape)
     print("")
-        
+    
+    print("!!! (check) count labeld players for each frame for every clip is not 4", np.sum(all_player_labels_enriched.groupby(["clip_number", "frame_number"]).count().label != 4))
+    
+    reduced_player_labels_frame_0 = all_player_labels_enriched[all_player_labels_enriched["frame_number"] == 0]
+    print("- reduced_player_labels_frame_0 shape: ", reduced_player_labels_frame_0.shape)
+    
+    print("== (step1) finish ==")
+    print("")
+    
     ## 2) make reduced_player_labels
+    print("== (step2) Make all other frames for each clip to have exactly 4 players ==")
+    
+    reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["RTxf"] < x_threshold) & 
+                                      (reduced_player_labels_frame_0["RTyf"] < y_threshold), "player_by_location"] = "tl"
+    reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["RTxf"] > x_threshold) & 
+                                      (reduced_player_labels_frame_0["RTyf"] < y_threshold), "player_by_location"] = "tr"
+    reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["RTxf"] > x_threshold) & 
+                                      (reduced_player_labels_frame_0["RTyf"] > y_threshold), "player_by_location"] = "br"
+    reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["RTxf"] < x_threshold) & 
+                                      (reduced_player_labels_frame_0["RTyf"] > y_threshold), "player_by_location"] = "bl"
+    
+    print("!!! (check) count player_by_location is null", np.sum(reduced_player_labels_frame_0.player_by_location.isnull()))
+    
+    
+    max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
+    
+    for i in range(1, max_clip_number + 1):
+        print(f"-- clip: {i}")
+        
+        current_clip = all_player_labels_enriched[all_player_labels_enriched["clip_number"] == i]
+        
+        before_frame = reduced_player_labels_frame_0.loc[reduced_player_labels_frame_0["clip_number"] == i, 
+                                                         ["clip_number", "frame_number", "Rxf", "Ryf", "RTxf", "RTyf", "player_by_location"]]
+
+        max_frame_number = get_maximum_frame(season, match_date, court_number, match_number, i)
+
+        for j in range(1, max_frame_number):
+            print("frame: ", j)
+            
+            current_frame = current_clip[current_clip["frame_number"] == j]
+            
+            temp_distance_df = pd.DataFrame(distance_matrix(before_frame[["RTxf", "RTyf"]], current_frame[["RTxf", "RTyf"]]), 
+                                            index = before_frame.player_by_location, columns=current_frame.index)
+            
+            player_to_be_added = {}
+            
+            for k in range(4):
+                print("temp_distance_df shape: ", temp_distance_df.shape)
+                if (j > 20): display(temp_distance_df)
+                min_index = np.argmin(temp_distance_df)
+                print("min_index: ", min_index)
+                r, c = divmod(min_index, temp_distance_df.shape[1])
+                print("r, c: ", (r, c))
+                
+                player_to_be_added[temp_distance_df.columns[c]] = temp_distance_df.index[r]
+                temp_distance_df = temp_distance_df.loc[temp_distance_df.index != temp_distance_df.index[r], 
+                                                        ~temp_distance_df.columns.isin([temp_distance_df.columns[c]])]
+
+    
+    
+            current_frame.loc[player_to_be_added.keys(), "player_by_location"] = list(player_to_be_added.values())
+            current_frame = current_frame.loc[player_to_be_added.keys(), :]
+            reduced_player_labels_frame_0 = reduced_player_labels_frame_0.append(current_frame)
+            
+            before_frame = reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["clip_number"] == i) & 
+                                                 (reduced_player_labels_frame_0["frame_number"] == j), 
+                                                 ["clip_number", "frame_number", "Rxf", "Ryf", "RTxf", "RTyf", "player_by_location"]]
+
+            
+        print("!!! (check) count player_by_location is null", np.sum(reduced_player_labels_frame_0.player_by_location.isnull()))
+
+    print("== (step2) finish ==")
     
     return reduced_player_labels_frame_0
 
 # %%
+season = "22F"
+match_date = "20220908"
+court_number = "court1"
+match_number = "match1"
+
+# %%
+match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+frame_0_path = match_path + "clip1/frames/frame_0.jpg"
+frame_0 = cv2.imread(frame_0_path)
+
+# %%
+M, warped = find_coordinate_transform_matrix(season, match_date, court_number, match_number)
+
+# %%
+all_player_labels_enriched = make_all_player_labels_enrichment(season, match_date, court_number, match_number)
+all_player_labels_enriched
+
+# %%
+court_coordinates_enriched = make_court_coordinates_enrichment(season, match_date, court_number, match_number)
+court_coordinates_enriched
+
+# %%
+reduced_player_labels_frame_0 = make_reduced_player_labels(season, match_date, court_number, match_number)
+reduced_player_labels_frame_0
+
+# %%
+clip_number = 1
+frame_number = 251
+
+visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number, label = [0])
+# %%
+
+
+
+# %%
+all_player_labels_enriched = all_player_labels_enriched[(all_player_labels_enriched["RTxf"] >= -100) & 
+                                                        (all_player_labels_enriched["RTxf"] <= warped.shape[1] + 100)]
+
+# %%
+target_clip_number = 1
+target_frame_number = 251
+
+target_labels = all_player_labels_enriched[(all_player_labels_enriched.clip_number == target_clip_number) & 
+                                            (all_player_labels_enriched.frame_number == target_frame_number)]
+target_labels
+
+# %%
+coordinate = (target_labels[(target_labels.clip_number == 1) & (target_labels.frame_number == 251)].iloc[1]["Rxf"] , 
+              target_labels[(target_labels.clip_number == 1) & (target_labels.frame_number == 251)].iloc[1]["Ryf"])
+
+# %%
+visualize_point_on_image(cv2.imread(match_path + "clip1/frames/frame_251.jpg"), coordinate)
+
+# %%
+visualize_point_on_image(warped, coordinate)
+
+
+# %%
+temp_df = target_labels[["RTxf", "RTyf"]]
+temp_distance_df = pd.DataFrame(distance_matrix(temp_df.values, temp_df.values), index=temp_df.index, columns=temp_df.index)
+temp_distance_df
+
+# %%
+duplicated_index = {}
+for j in range(temp_distance_df.shape[0]):
+    duplicated_index_list = []
+    for k in range(j + 1, temp_distance_df.shape[0]):
+        if temp_distance_df.iloc[j, k] < 10: duplicated_index_list.append(temp_distance_df.iloc[0].index[k]
+    duplicated_index[temp_distance_df.index[j]] = duplicated_index_list
+
+print("- duplicated cases: ", duplicated_index)
+
+index_to_delete = []
+
+for v in duplicated_index.values():
+    index_to_delete.append(v)
+
+index_to_delete = sum(index_to_delete, [])
