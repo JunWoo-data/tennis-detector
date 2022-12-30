@@ -33,7 +33,7 @@ def player_detect(season, match_date, court_number, match_number):
         clip_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/" + "clip" + str(i)
         source_path = clip_path + "/frames"
         
-        !python3 detect.py --weights yolov7_training.pt --conf 0.1 --source {source_path} --save-txt --classes 0 38 --project {clip_path} --name player_detect --exist-ok --nosave
+        !python3 detect.py --weights yolov7_training.pt --conf 0.1 --source {source_path} --save-txt --classes 0 32 38 --project {clip_path} --name player_detect --exist-ok --nosave
         
         end = time.time()
         print(f"Took {((end - start) / 60):.3f} minutes for clip {i}")
