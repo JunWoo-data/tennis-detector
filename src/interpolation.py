@@ -8,6 +8,7 @@ import cv2
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
 from google.colab.patches import cv2_imshow
+import os
 
 
 # %%
@@ -353,12 +354,13 @@ def make_reduced_player_labels(season, match_date, court_number, match_number):
             target_index = temp_4_lag[temp_4_lag.distance > 300].sort_values("distance").index
 
             print("- Number of frames that have labels farther than 300 from labels of before frame: ", len(target_index))  
+            print("- target_index: ", target_index)
 
             target_values = temp_4_lag.loc[temp_4_lag.index.isin(target_index), 
                                           ["xc_lag_1", "yc_lag_1", "w_lag_1", "h_lag_1", "Rxf_lag_1", "Ryf_lag_1", "RTxf_lag_1", "RTyf_lag_1"]]      
-
+    
             reduced_player_labels_frame_0.loc[reduced_player_labels_frame_0.index.isin(target_index), 
-                                              ["xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]] = target_values
+                                              ["xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]] = target_values.values
             
             
             before_frame = reduced_player_labels_frame_0.loc[(reduced_player_labels_frame_0["clip_number"] == i) & 
@@ -369,7 +371,6 @@ def make_reduced_player_labels(season, match_date, court_number, match_number):
         print("!!! (check) count player_by_location is null", np.sum(reduced_player_labels_frame_0.player_by_location.isnull()))
         print("== (step2) finish ==")
         print("")
-        
         
     return reduced_player_labels_frame_0
 
@@ -400,6 +401,43 @@ reduced_player_labels_frame_0 = make_reduced_player_labels(season, match_date, c
 reduced_player_labels_frame_0
 
 # %%
+temp = make_reduced_player_labels(season, match_date, court_number, match_number)
+temp
+
+# %%
+temp[temp.frame_number >= 298]
+
+# %%
+target_values = temp.loc[(temp.frame_number == 298) & (temp.player_by_location == "bl"), ["xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]]
+target_values
+
+# %%
+temp.loc[temp.index.isin([1341]), ["xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]] = target_values.values
+
+# %%
+temp
+
+# %%
+np.sum(reduced_player_labels_frame_0.isnull())
+
+# %%
+reduced_player_labels_frame_0[reduced_player_labels_frame_0.xc.isnull()].sort_values(["clip_number", "frame_number"])
+
+# %%
+clip_number = 1 
+frame_number = 299 
+
+visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number)
+
+# %%
+cv2.imread(match_path + f"clip{clip_number}/frames/frame_{frame_number}.jpg")
+
+
+
+
+
+
+# %%
 def check_player_by_location_movement(season, match_date, court_number, match_number):
     match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
 
@@ -426,6 +464,7 @@ def check_player_by_location_movement(season, match_date, court_number, match_nu
  
 
 # %%
+i = 1
 current_clip = reduced_player_labels_frame_0[reduced_player_labels_frame_0.clip_number == i]
 current_clip
 
@@ -458,8 +497,8 @@ ax.imshow(frame_0)
 plt.show()
 
 # %%
-
+os.makedir("/check/")
 # %%
-fig.savefig("../check/clip1.png")
+fig.savefig("/check/clip1.png")
 
 # %%
