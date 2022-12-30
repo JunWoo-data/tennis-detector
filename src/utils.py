@@ -139,6 +139,41 @@ def combine_player_detect_labels(season, match_date, court_number, match_number)
     print(" ")
 
 # %%
+def combine_segment_detect_labels(season, match_date, court_number, match_number):
+    max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
+
+    frame_0_segmentations = pd.DataFrame(columns = ["clip_number", "frame_number", "Rx1", "Ry1", "Rx2", "Ry2", "segmentation"])
+
+    for i in range(1, max_clip_number + 1):
+        match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+        labels_path = match_path + "clip" + str(i) + "/segmentation_detect/labels/frame_0.txt"
+
+        segment_label = pd.read_csv(labels_path, header = None)
+
+        Rx1 = []
+        Ry1 = []
+        Rx2 = []
+        Ry2 = []
+        segmentation = []
+
+        for j in range(segment_label.shape[0]):
+            Rx1.append(int(segment_label.iloc[j].values[0].split(" ")[1]))
+            Ry1.append(int(segment_label.iloc[j].values[0].split(" ")[2]))
+            Rx2.append(int(segment_label.iloc[j].values[0].split(" ")[3]))
+            Ry2.append(int(segment_label.iloc[j].values[0].split(" ")[4]))
+            segmentation.append(segment_label.iloc[j].values[0].split(" ")[5:])
+
+        target_df = pd.DataFrame({"clip_number": i, "frame_number": 0, "Rx1": Rx1, "Ry1": Ry1, "Rx2": Rx2, "Ry2": Ry2, "segmentation": segmentation})
+        frame_0_segmentations = frame_0_segmentations.append(pd.DataFrame({"clip_number": i, "frame_number": 0, "Rx1": Rx1, "Ry1": Ry1, "Rx2": Rx2, "Ry2": Ry2, "segmentation": segmentation}))
+        
+    frame_0_segmentations.to_csv(match_path + "frame_0_segmentations.csv", index = False)
+    print("== All segment labels for frame_0s saved for " + season + " / " + match_date + " / " + court_number + " / " + match_number + " :")
+    print("- save path: " + match_path + "frame_0_segmentations.csv")
+    print("- file name: frame_0_segmentations.csv")
+    print("- size: " + str(frame_0_segmentations.shape))
+    print(" ")
+
+# %%
 def visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number, label = [0, 1, 38]):
     match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
     labels_file_path = match_path + "/all_player_labels.csv"
@@ -219,6 +254,9 @@ match_number = "match1"
 
 # %%
 # combine_player_detect_labels(season, match_date, court_number, match_number)
+
+# %%
+# combine_segment_detect_labels(season, match_date, court_number, match_number)
 
 # %%
 clip_number = 9
