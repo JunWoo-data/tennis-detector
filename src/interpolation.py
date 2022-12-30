@@ -622,16 +622,47 @@ def make_reduced_segment_labels(season, match_date, court_number, match_number):
 reduced_segment_labels = make_reduced_segment_labels(season, match_date, court_number, match_number)
 reduced_segment_labels
 
+
+# %%
+### 
+img = player_1_cropped
+
+# %%
+#def remove_background(img):
+# convert to graky
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+# threshold input image as mask
+mask = cv2.threshold(gray, 250, 255, cv2.THRESH_BINARY)[1]
+
+# negate mask
+mask = 255 - mask
+
+# apply morphology to remove isolated extraneous noise
+# use borderconstant of black since foreground touches the edges
+kernel = np.ones((3,3), np.uint8)
+mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+# anti-alias the mask -- blur then stretch
+# blur alpha channel
+mask = cv2.GaussianBlur(mask, (0,0), sigmaX=2, sigmaY=2, borderType = cv2.BORDER_DEFAULT)
+
+# linear stretch so that 127.5 goes to 0, but 255 stays 255
+mask = (2*(mask.astype(np.float32))-255.0).clip(0,255).astype(np.uint8)
+ 
+# put mask into alpha channel
+result = img.copy()
+result = cv2.cvtColor(result, cv2.COLOR_BGR2BGRA)
+result[:, :, 3] = mask
+
+# %%
+cv2_imshow(result)
 # %%
 ###### 
 # def player_assig:
-
-# %%
-before_clip = reduced_player_labels[(reduced_player_labels.clip_number == 1) & (reduced_player_labels.frame_number == 0)]
-before_clip
-
-# %%
-before_frame = cv2.imread(match_path + f"clip1/frames/frame_0.jpg")
+reduced_player_labels = pd.read_csv(match_path + "reduced_player_labels.csv")
+reduced_player_labels
 
 
 # %%
@@ -639,6 +670,12 @@ player_1_location_info = ["tl"]
 player_2_location_info = ["tr"]
 player_3_location_info = ["br"]
 player_4_location_info = ["bl"]
+
+# %%
+print("player1 location info: ", player_1_location_info)
+print("player2 location info: ", player_2_location_info)
+print("player3 location info: ", player_3_location_info)
+print("player4 location info: ", player_4_location_info)
 
 # %%
 reduced_player_labels.loc[(reduced_player_labels.clip_number == 1) & 
@@ -649,9 +686,17 @@ reduced_player_labels.loc[(reduced_player_labels.clip_number == 1) &
                           (reduced_player_labels.player_by_location == player_3_location_info[0]), "player_by_frame_0"] = "player_3"
 reduced_player_labels.loc[(reduced_player_labels.clip_number == 1) & 
                           (reduced_player_labels.player_by_location == player_4_location_info[0]), "player_by_frame_0"] = "player_4"
+
+# %%
+before_clip = reduced_player_labels[(reduced_player_labels.clip_number == 1) & (reduced_player_labels.frame_number == 0)]
+before_clip
+
+# %%
+before_frame = cv2.imread(match_path + f"clip1/frames/frame_0.jpg")
+
 # %%
 # for cn in range(2, max_clip_number + 1):
-cn = 3
+cn = 5
 
 # %%
 current_clip = reduced_player_labels[(reduced_player_labels.clip_number == cn) & (reduced_player_labels.frame_number == 0)]
@@ -738,36 +783,158 @@ bl_cropped = current_frame[bl_info["Ry1"].values[0]:bl_info["Ry1"].values[0] + b
                            bl_info["Rx1"].values[0]:bl_info["Rx1"].values[0] + bl_info["Rw"].values[0]]
 
 # %%
-
-# %%
 cv2_imshow(tl_cropped)
 cv2_imshow(tr_cropped)
 cv2_imshow(br_cropped)
 cv2_imshow(bl_cropped)
 
-# %%
-player_1_cropped_resized = cv2.resize(player_1_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
-player_2_cropped_resized = cv2.resize(player_2_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
-player_3_cropped_resized = cv2.resize(player_3_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
-player_4_cropped_resized = cv2.resize(player_4_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+# # %%
+# player_1_cropped_resized = cv2.resize(player_1_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+# player_2_cropped_resized = cv2.resize(player_2_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+# player_3_cropped_resized = cv2.resize(player_3_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+# player_4_cropped_resized = cv2.resize(player_4_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+
+# # %%
+# cv2_imshow(player_1_cropped_resized)
+# cv2_imshow(player_2_cropped_resized)
+# cv2_imshow(player_3_cropped_resized)
+# cv2_imshow(player_4_cropped_resized)
+
+# # %%
+# tl_cropped_resized = cv2.resize(tl_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+# tr_cropped_resized = cv2.resize(tr_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+# br_cropped_resized = cv2.resize(br_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+# bl_cropped_resized = cv2.resize(bl_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+
+# # %%
+# cv2_imshow(tl_cropped_resized)
+# cv2_imshow(tr_cropped_resized)
+# cv2_imshow(br_cropped_resized)
+# cv2_imshow(bl_cropped_resized)
 
 # %%
-cv2_imshow(player_1_cropped_resized)
-cv2_imshow(player_2_cropped_resized)
-cv2_imshow(player_3_cropped_resized)
-cv2_imshow(player_4_cropped_resized)
+index = {}
+images = {"player1": player_1_cropped,
+          "player2": player_2_cropped,
+          "player3": player_3_cropped,
+          "player4": player_4_cropped,
+          "tl": tl_cropped,
+          "tr": tr_cropped,
+          "br": br_cropped,
+          "bl": bl_cropped}
 
 # %%
-tl_cropped_resized = cv2.resize(tl_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
-tr_cropped_resized = cv2.resize(tr_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
-br_cropped_resized = cv2.resize(br_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
-bl_cropped_resized = cv2.resize(bl_cropped, crop_resize_dim, interpolation = cv2.INTER_AREA)
+for k, v in images.items():
+    hist = cv2.calcHist([v], [0, 1, 2], None, [256, 256, 256], [0, 256, 0, 256, 0, 256])
+    hist = cv2.normalize(hist, hist).flatten()
+    index[k] = hist
 
 # %%
-cv2_imshow(tl_cropped_resized)
-cv2_imshow(tr_cropped_resized)
-cv2_imshow(br_cropped_resized)
-cv2_imshow(bl_cropped_resized)
+method = cv2.HISTCMP_BHATTACHARYYA
+# %%
+player1_tl_d = cv2.compareHist(index["player1"], index["tl"], method)
+player1_tr_d = cv2.compareHist(index["player1"], index["tr"], method)
+player1_br_d = cv2.compareHist(index["player1"], index["br"], method)
+player1_bl_d = cv2.compareHist(index["player1"], index["bl"], method)
+print(player1_tl_d, player1_tr_d, player1_br_d, player1_bl_d)
+
+# %%
+player2_tl_d = cv2.compareHist(index["player2"], index["tl"], method)
+player2_tr_d = cv2.compareHist(index["player2"], index["tr"], method)
+player2_br_d = cv2.compareHist(index["player2"], index["br"], method)
+player2_bl_d = cv2.compareHist(index["player2"], index["bl"], method)
+print(player2_tl_d, player2_tr_d, player2_br_d, player2_bl_d)
+
+# %%
+player3_tl_d = cv2.compareHist(index["player3"], index["tl"], method)
+player3_tr_d = cv2.compareHist(index["player3"], index["tr"], method)
+player3_br_d = cv2.compareHist(index["player3"], index["br"], method)
+player3_bl_d = cv2.compareHist(index["player3"], index["bl"], method)
+print(player3_tl_d, player3_tr_d, player3_br_d, player3_bl_d)
+
+# %%
+player4_tl_d = cv2.compareHist(index["player4"], index["tl"], method)
+player4_tr_d = cv2.compareHist(index["player4"], index["tr"], method)
+player4_br_d = cv2.compareHist(index["player4"], index["br"], method)
+player4_bl_d = cv2.compareHist(index["player4"], index["bl"], method)
+print(player4_tl_d, player4_tr_d, player4_br_d, player4_bl_d)
+
+# %%
+player1_dists = [player1_tl_d, player1_tr_d, player1_br_d, player1_bl_d]
+player2_dists = [player2_tl_d, player2_tr_d, player2_br_d, player2_bl_d]
+player3_dists = [player3_tl_d, player3_tr_d, player3_br_d, player3_bl_d]
+player4_dists = [player4_tl_d, player4_tr_d, player4_br_d, player4_bl_d]
+
+# %%
+temp_distance_df = pd.DataFrame([player1_dists, player2_dists, player3_dists, player4_dists],
+                                index = ["player1", "player2", "player3", "player4"], columns = ["tl", "tr", "br", "bl"])
+temp_distance_df
+# %%
+before_and_current_correct_mapping = {}
+            
+for k in range(4):
+    print("temp_distance_df shape: ", temp_distance_df.shape)
+    display(temp_distance_df)
+    min_index = np.argmin(temp_distance_df)
+    print("min_index: ", min_index)
+    r, c = divmod(min_index, temp_distance_df.shape[1])
+    print("min distance value: ", temp_distance_df.iloc[r, c])
+    print("r, c: ", (r, c))
+    
+    before_and_current_correct_mapping[temp_distance_df.columns[c]] = temp_distance_df.index[r]
+    temp_distance_df = temp_distance_df.loc[temp_distance_df.index != temp_distance_df.index[r], 
+                                            ~temp_distance_df.columns.isin([temp_distance_df.columns[c]])]
+
+
+# %%
+before_and_current_correct_mapping
+
+# %%
+for k, v in before_and_current_correct_mapping.items():
+    if v == "player1": player_1_location_info.append(k)
+    elif v == "player2": player_2_location_info.append(k)
+    elif v == "player3": player_3_location_info.append(k)
+    elif v == "player4": player_4_location_info.append(k)
+
+# %%
+print("player1 location info: ", player_1_location_info)
+print("player2 location info: ", player_2_location_info)
+print("player3 location info: ", player_3_location_info)
+print("player4 location info: ", player_4_location_info)
+
+# %%
+cn
+
+# %%
+reduced_player_labels.loc[(reduced_player_labels.clip_number == cn) & 
+                          (reduced_player_labels.player_by_location == player_1_location_info[cn - 1]), "player_by_frame_0"] = "player_1"
+reduced_player_labels.loc[(reduced_player_labels.clip_number == cn) & 
+                          (reduced_player_labels.player_by_location == player_2_location_info[cn - 1]), "player_by_frame_0"] = "player_2"
+reduced_player_labels.loc[(reduced_player_labels.clip_number == cn) & 
+                          (reduced_player_labels.player_by_location == player_3_location_info[cn - 1]), "player_by_frame_0"] = "player_3"
+reduced_player_labels.loc[(reduced_player_labels.clip_number == cn) & 
+                          (reduced_player_labels.player_by_location == player_4_location_info[cn - 1]), "player_by_frame_0"] = "player_4"
+
+# %%
+before_clip = reduced_player_labels[(reduced_player_labels.clip_number == cn) & (reduced_player_labels.frame_number == 0)]
+before_clip
+
+# %%
+before_frame = cv2.imread(match_path + f"clip{cn}/frames/frame_0.jpg")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # %%
@@ -1031,9 +1198,84 @@ before_frame = cv2.imread(match_path + f"clip{cn}/frames/frame_0.jpg")
 
 
 
+# %%
+index = {}
+images = {"player1": player_1_cropped_resized,
+          "player2": player_2_cropped_resized,
+          "player3": player_3_cropped_resized,
+          "player4": player_4_cropped_resized,
+          "tl": tl_cropped_resized,
+          "tr": tr_cropped_resized,
+          "br": br_cropped_resized,
+          "bl": bl_cropped_resized}
+
+# %%
+for k, v in images.items():
+    hist = cv2.calcHist([v], [0, 1, 2], None, [256, 256, 256], [0, 256, 0, 256, 0, 256])
+    hist = cv2.normalize(hist, hist).flatten()
+    index[k] = hist
+
+# %%
+method = cv2.HISTCMP_BHATTACHARYYA
+# %%
+player1_tl_d = cv2.compareHist(index["player1"], index["tl"], method)
+player1_tr_d = cv2.compareHist(index["player1"], index["tr"], method)
+player1_br_d = cv2.compareHist(index["player1"], index["br"], method)
+player1_bl_d = cv2.compareHist(index["player1"], index["bl"], method)
+print(player1_tl_d, player1_tr_d, player1_br_d, player1_bl_d)
+
+# %%
+player2_tl_d = cv2.compareHist(index["player2"], index["tl"], method)
+player2_tr_d = cv2.compareHist(index["player2"], index["tr"], method)
+player2_br_d = cv2.compareHist(index["player2"], index["br"], method)
+player2_bl_d = cv2.compareHist(index["player2"], index["bl"], method)
+print(player2_tl_d, player2_tr_d, player2_br_d, player2_bl_d)
+
+# %%
+player3_tl_d = cv2.compareHist(index["player3"], index["tl"], method)
+player3_tr_d = cv2.compareHist(index["player3"], index["tr"], method)
+player3_br_d = cv2.compareHist(index["player3"], index["br"], method)
+player3_bl_d = cv2.compareHist(index["player3"], index["bl"], method)
+print(player3_tl_d, player3_tr_d, player3_br_d, player3_bl_d)
+
+# %%
+player4_tl_d = cv2.compareHist(index["player4"], index["tl"], method)
+player4_tr_d = cv2.compareHist(index["player4"], index["tr"], method)
+player4_br_d = cv2.compareHist(index["player4"], index["br"], method)
+player4_bl_d = cv2.compareHist(index["player4"], index["bl"], method)
+print(player4_tl_d, player4_tr_d, player4_br_d, player4_bl_d)
+
+# %%
+player1_dists = [player1_tl_d, player1_tr_d, player1_br_d, player1_bl_d]
+player2_dists = [player2_tl_d, player2_tr_d, player2_br_d, player2_bl_d]
+player3_dists = [player3_tl_d, player3_tr_d, player3_br_d, player3_bl_d]
+player4_dists = [player4_tl_d, player4_tr_d, player4_br_d, player4_bl_d]
+
+# %%
+temp_distance_df = pd.DataFrame([player1_dists, player2_dists, player3_dists, player4_dists],
+                                index = ["player1", "player2", "player3", "player4"], columns = ["tl", "tr", "br", "bl"])
+temp_distance_df
+# %%
+before_and_current_correct_mapping = {}
+            
+for k in range(4):
+    print("temp_distance_df shape: ", temp_distance_df.shape)
+    display(temp_distance_df)
+    min_index = np.argmin(temp_distance_df)
+    print("min_index: ", min_index)
+    r, c = divmod(min_index, temp_distance_df.shape[1])
+    print("min distance value: ", temp_distance_df.iloc[r, c])
+    print("r, c: ", (r, c))
+    
+    before_and_current_correct_mapping[temp_distance_df.columns[c]] = temp_distance_df.index[r]
+    temp_distance_df = temp_distance_df.loc[temp_distance_df.index != temp_distance_df.index[r], 
+                                            ~temp_distance_df.columns.isin([temp_distance_df.columns[c]])]
 
 
+# %%
+before_and_current_correct_mapping
 
+# %%
 
 # %%
 np.inf > 3
