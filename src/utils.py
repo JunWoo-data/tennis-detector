@@ -161,7 +161,7 @@ def combine_segment_detect_labels(season, match_date, court_number, match_number
             Ry1.append(int(segment_label.iloc[j].values[0].split(" ")[2]))
             Rx2.append(int(segment_label.iloc[j].values[0].split(" ")[3]))
             Ry2.append(int(segment_label.iloc[j].values[0].split(" ")[4]))
-            segmentation.append(segment_label.iloc[j].values[0].split(" ")[5:])
+            segmentation.append([int(i) for i in segment_label.iloc[0].values[0].split(" ")[5:]])
 
         target_df = pd.DataFrame({"clip_number": i, "frame_number": 0, "Rx1": Rx1, "Ry1": Ry1, "Rx2": Rx2, "Ry2": Ry2, "segmentation": segmentation})
         frame_0_segmentations = frame_0_segmentations.append(pd.DataFrame({"clip_number": i, "frame_number": 0, "Rx1": Rx1, "Ry1": Ry1, "Rx2": Rx2, "Ry2": Ry2, "segmentation": segmentation}))
