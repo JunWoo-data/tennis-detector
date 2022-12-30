@@ -5,13 +5,13 @@ import time
 
 # %%
 # Download YOLOv7 repository and install requirements
-!git clone https://github.com/RizwanMunawar/yolov7-segmentation.git
-%cd yolov7-segmentation
-!pip install -r requirements.txt
+# !git clone https://github.com/RizwanMunawar/yolov7-segmentation.git
+# %cd yolov7-segmentation
+# !pip install -r requirements.txt
 
 # %%
 # download COCO starting checkpoint
-!wget https://github.com/RizwanMunawar/yolov7-segmentation/releases/download/yolov7-segmentation/yolov7-seg.pt
+# !wget https://github.com/RizwanMunawar/yolov7-segmentation/releases/download/yolov7-segmentation/yolov7-seg.pt
 
 # %%
 # segment/predict.py line 189 change to:
