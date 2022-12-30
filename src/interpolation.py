@@ -382,7 +382,7 @@ def make_reduced_player_labels(season, match_date, court_number, match_number):
     return reduced_player_labels_frame_0
 
 # %%
-def check_player_by_location_movement(season, match_date, court_number, match_number):
+def check_player_by_location(season, match_date, court_number, match_number):
     match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
     
     reduced_player_labels = pd.read_csv(match_path + "reduced_player_labels.csv")
@@ -411,13 +411,32 @@ def check_player_by_location_movement(season, match_date, court_number, match_nu
         
         fig = plt.figure(figsize = (20, 10))
 
-        ax = fig.add_subplot(111)
-        axp = ax.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
-        axp = ax.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
-        axp = ax.scatter(bl["Rxf"], bl["Ryf"], c = bl.index, cmap = plt.cm.Greens, s=100, zorder=1)
-        axp = ax.scatter(br["Rxf"], br["Ryf"], c = br.index, cmap = plt.cm.Greys, s=100, zorder=1)
+        plt.subplot(2, 2, 1)
+        plt.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
+        plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
+        plt.axis("off")
+        plt.title("Top-Left Player movement during the clip", fontsize = 20)
 
-        ax.imshow(frame_0)
+        plt.subplot(2, 2, 2)
+        plt.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
+        plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
+        plt.axis("off")
+        plt.title("Top-Right Player movement during the clip", fontsize = 20)
+
+
+        plt.subplot(2, 2, 3)
+        plt.scatter(bl["Rxf"], bl["Ryf"], c = bl.index, cmap = plt.cm.Greens, s=100, zorder=1)
+        plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
+        plt.axis("off")
+        plt.title("Bottom-Left Player movement during the clip", fontsize = 20)
+
+        plt.subplot(2, 2, 4)
+        plt.scatter(br["Rxf"], br["Ryf"], c = br.index, cmap = plt.cm.Greys, s=100, zorder=1)
+        plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
+        plt.axis("off")
+        plt.title("Bottom-Right Player movement during the clip", fontsize = 20)
+
+        fig.tight_layout()
         fig.savefig(f"check/{season}_{match_date}_{court_number}_{match_number}_clip{i}.png")
         plt.close(fig)
         
@@ -458,77 +477,4 @@ reduced_player_labels = pd.read_csv(match_path + "reduced_player_labels.csv")
 reduced_player_labels
 
 # %%
-check_player_by_location_movement(season, match_date, court_number, match_number)
-
-
-# %%
-
-        
- 
-
-# %%
-i = 1
-current_clip = reduced_player_labels_frame_0[reduced_player_labels_frame_0.clip_number == i]
-current_clip
-
-# %%
-current_clip = current_clip.sort_values(["player_by_location", "frame_number"])[["player_by_location", "frame_number", "Rxf", "Ryf"]]
-current_clip
-
-# %%
-tl = current_clip.loc[current_clip.player_by_location == "tl", ["frame_number", "Rxf", "Ryf"]]
-tr = current_clip.loc[current_clip.player_by_location == "tr", ["frame_number", "Rxf", "Ryf"]]
-bl = current_clip.loc[current_clip.player_by_location == "bl", ["frame_number", "Rxf", "Ryf"]]
-br = current_clip.loc[current_clip.player_by_location == "br", ["frame_number", "Rxf", "Ryf"]]
-
-# %%
-tl.index = tl.frame_number
-tr.index = tr.frame_number
-bl.index = bl.frame_number
-br.index = br.frame_number
-
-# %%
-plt.ioff()
-# %%
-fig = plt.figure(figsize = (20, 10))
-
-plt.subplot(2, 2, 1)
-plt.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
-plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
-plt.axis("off")
-plt.title("Top-Left Player movement during the clip", fontsize = 10)
-
-plt.subplot(2, 2, 2)
-plt.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
-plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
-plt.axis("off")
-plt.title("Top-Right Player movement during the clip")
-
-
-plt.subplot(2, 2, 3)
-plt.scatter(bl["Rxf"], bl["Ryf"], c = bl.index, cmap = plt.cm.Greens, s=100, zorder=1)
-plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
-plt.axis("off")
-plt.title("Bottom-Left Player movement during the clip")
-
-plt.subplot(2, 2, 4)
-plt.scatter(br["Rxf"], br["Ryf"], c = br.index, cmap = plt.cm.Greys, s=100, zorder=1)
-plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
-plt.axis("off")
-plt.title("Bottom-Right Player movement during the clip")
-
-os.mkdir(f"check/")
-fig.savefig(f"check/{season}_{match_date}_{court_number}_{match_number}_clip{i}.png")
-plt.close(fig)
-#plt.show()
-
-# %%
-os.getcwd()
-# %%
-os.mkdir("check/")
-# %%
-fig.savefig("check/clip1.png")
-
-# %%
-os.listdir(os.getcwd())
-# %%
+check_player_by_location(season, match_date, court_number, match_number)
