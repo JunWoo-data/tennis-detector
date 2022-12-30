@@ -389,8 +389,8 @@ def check_player_by_location(season, match_date, court_number, match_number):
 
     max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
     
-    if not os.path.exists("check/"):
-        os.mkdir("check/")
+    if not os.path.exists("check_player_by_location/"):
+        os.mkdir("check_player_by_location/")
         
     for i in range(1, max_clip_number + 1):
         frame_0_path = match_path + f"clip{i}/frames/frame_0.jpg"
@@ -437,7 +437,7 @@ def check_player_by_location(season, match_date, court_number, match_number):
         plt.title("Bottom-Right Player movement during the clip", fontsize = 20)
 
         fig.tight_layout()
-        fig.savefig(f"check/{season}_{match_date}_{court_number}_{match_number}_clip{i}.png")
+        fig.savefig(f"check_player_by_location/{season}_{match_date}_{court_number}_{match_number}_clip{i}.png")
         plt.close(fig)
         
 # %%
