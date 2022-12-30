@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 from scipy.spatial import distance_matrix
 from scipy.special import rel_entr
+from sewar.full_ref import mse, rmse, psnr, uqi, ssim, ergas, scc, rase, sam, msssim, vifp
+from collections import Counter
 import cv2
 import matplotlib as mpl
 import matplotlib.pyplot as plt 
@@ -621,249 +623,8 @@ reduced_segment_labels = make_reduced_segment_labels(season, match_date, court_n
 reduced_segment_labels
 
 # %%
-# color histogram -> kl divergence 적용 되는지 체크 
-temp = reduced_segment_labels[reduced_segment_labels.clip_number <= 3]
-temp
-# %%
-#### clip1 tl
-clip_number = 1 
-target_location = "tl"
-
-# %%
-frame_path = match_path + "clip1/frames/frame_0.jpg"
-clip1_frame0 = cv2.imread(frame_path)
-
-# %%
-temp.loc[(temp.player_by_location == target_location) & (temp.clip_number == clip_number), ["Rx1", "Ry1", "Rx2", "Ry2"]]
-
-# %%
-crop_info = temp.loc[(temp.player_by_location == target_location) & (temp.clip_number == clip_number), ["Rx1", "Ry1", "Rx2", "Ry2"]].values[0]
-crop_info
-
-# %%
-x = crop_info[0]
-y = crop_info[1]
-w = crop_info[2] - crop_info[0]
-h = crop_info[3] - crop_info[1] 
-
-# %%
-clip1_tl_cropped = clip1_frame0[y:y+h, x:x+w]
-
-# %%
-cv2_imshow(clip1_tl_cropped)
-# %%
-#### clip2 tl
-clip_number = 2 
-target_location = "tl"
-
-# %%
-frame_path = match_path + f"clip{clip_number}/frames/frame_0.jpg"
-clip2_frame0 = cv2.imread(frame_path)
-
-# %%
-temp.loc[(temp.player_by_location == target_location) & (temp.clip_number == clip_number), ["Rx1", "Ry1", "Rx2", "Ry2"]]
-
-# %%
-crop_info = temp.loc[(temp.player_by_location == target_location) & (temp.clip_number == clip_number), ["Rx1", "Ry1", "Rx2", "Ry2"]].values[0]
-crop_info
-
-# %%
-x = crop_info[0]
-y = crop_info[1]
-w = crop_info[2] - crop_info[0]
-h = crop_info[3] - crop_info[1] 
-
-# %%
-clip2_tl_cropped = clip2_frame0[y:y+h, x:x+w]
-
-# %%
-cv2_imshow(clip2_tl_cropped)
-
-# %%
-#### clip2 br
-clip_number = 2 
-target_location = "br"
-
-# %%
-frame_path = match_path + f"clip{clip_number}/frames/frame_0.jpg"
-clip2_frame0 = cv2.imread(frame_path)
-
-# %%
-temp.loc[(temp.player_by_location == target_location) & (temp.clip_number == clip_number), ["Rx1", "Ry1", "Rx2", "Ry2"]]
-
-# %%
-crop_info = temp.loc[(temp.player_by_location == target_location) & (temp.clip_number == clip_number), ["Rx1", "Ry1", "Rx2", "Ry2"]].values[0]
-crop_info
-
-# %%
-x = crop_info[0]
-y = crop_info[1]
-w = crop_info[2] - crop_info[0]
-h = crop_info[3] - crop_info[1] 
-
-# %%
-clip2_br_cropped = clip2_frame0[y:y+h, x:x+w]
-
-# %%
-cv2_imshow(clip2_br_cropped)
-
-
-# %%
-#### clip2 tr
-clip_number = 2 
-target_location = "tr"
-
-# %%
-frame_path = match_path + f"clip{clip_number}/frames/frame_0.jpg"
-clip2_frame0 = cv2.imread(frame_path)
-
-# %%
-temp.loc[(temp.player_by_location == target_location) & (temp.clip_number == clip_number), ["Rx1", "Ry1", "Rx2", "Ry2"]]
-
-# %%
-crop_info = temp.loc[(temp.player_by_location == target_location) & (temp.clip_number == clip_number), ["Rx1", "Ry1", "Rx2", "Ry2"]].values[0]
-crop_info
-
-# %%
-x = crop_info[0]
-y = crop_info[1]
-w = crop_info[2] - crop_info[0]
-h = crop_info[3] - crop_info[1] 
-
-# %%
-clip2_tr_cropped = clip2_frame0[y:y+h, x:x+w]
-
-# %%
-cv2_imshow(clip2_tr_cropped)
-
-
-# %%
-!pip install image-similarity-measures
-
-# %%
-!pip install sewar
-
-# %%
-from sewar.full_ref import mse, rmse, psnr, uqi, ssim, ergas, scc, rase, sam, msssim, vifp
-from scipy.special import rel_entr
-
-# %%
-### clip1 tl vs clip2 tl (resize to smaller size)
-clip1_tl_cropped.shape
-clip2_tl_cropped.shape
-
-# %%
-resize_dim = (min(clip1_tl_cropped.shape[0], clip2_tl_cropped.shape[0]),
-              min(clip1_tl_cropped.shape[1], clip2_tl_cropped.shape[1]))
-resize_dim
-# %%
-clip1_tl_cropped_resized = cv2.resize(clip1_tl_cropped, resize_dim, interpolation = cv2.INTER_AREA)
-cv2_imshow(clip1_tl_cropped_resized)
-
-# %%
-clip2_tl_cropped_resized = cv2.resize(clip2_tl_cropped, resize_dim, interpolation = cv2.INTER_AREA)
-cv2_imshow(clip2_tl_cropped_resized)
-
-
-
-# %%
-print("MSE: ", mse(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("RMSE: ", rmse(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("PSNR: ", psnr(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("SSIM: ", ssim(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("UQI: ", uqi(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-#print("MSSSIM: ", msssim(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("ERGAS: ", ergas(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("SCC: ", scc(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("RASE: ", rase(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("SAM: ", sam(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-#print("VIF: ", vifp(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-
-# %%
-resize_dim = (max(clip1_tl_cropped.shape[0], clip2_tl_cropped.shape[0], clip2_br_cropped.shape[0], clip2_tr_cropped.shape[0]),
-              max(clip1_tl_cropped.shape[1], clip2_tl_cropped.shape[1], clip2_br_cropped.shape[1], clip2_tr_cropped.shape[1]))
-resize_dim
-# %%
-clip1_tl_cropped_resized = cv2.resize(clip1_tl_cropped, resize_dim, interpolation = cv2.INTER_AREA)
-cv2_imshow(clip1_tl_cropped_resized)
-
-# %%
-clip2_tl_cropped_resized = cv2.resize(clip2_tl_cropped, resize_dim, interpolation = cv2.INTER_AREA)
-cv2_imshow(clip2_tl_cropped_resized)
-
-#  %%
-clip2_tr_cropped_resized = cv2.resize(clip2_tr_cropped, resize_dim, interpolation = cv2.INTER_AREA)
-cv2_imshow(clip2_tr_cropped_resized)
-
-# %%
-clip2_br_cropped_resized = cv2.resize(clip2_br_cropped, resize_dim, interpolation = cv2.INTER_AREA)
-cv2_imshow(clip2_br_cropped_resized)
-
-# %%
-print("clip1 - tl vs clip2 - tl")
-print("MSE: ", mse(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("RMSE: ", rmse(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("PSNR: ", psnr(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("SSIM: ", ssim(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("UQI: ", uqi(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-#print("MSSSIM: ", msssim(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("ERGAS: ", ergas(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("SCC: ", scc(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("RASE: ", rase(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("SAM: ", sam(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-#print("VIF: ", vifp(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-
-# %%
-print("clip1 - tl vs clip2 - tr")
-print("MSE: ", mse(clip1_tl_cropped_resized,clip2_tr_cropped_resized))
-print("RMSE: ", rmse(clip1_tl_cropped_resized,clip2_tr_cropped_resized))
-print("PSNR: ", psnr(clip1_tl_cropped_resized,clip2_tr_cropped_resized))
-print("SSIM: ", ssim(clip1_tl_cropped_resized,clip2_tr_cropped_resized))
-print("UQI: ", uqi(clip1_tl_cropped_resized,clip2_tr_cropped_resized))
-#print("MSSSIM: ", msssim(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("ERGAS: ", ergas(clip1_tl_cropped_resized,clip2_tr_cropped_resized))
-print("SCC: ", scc(clip1_tl_cropped_resized,clip2_tr_cropped_resized))
-print("RASE: ", rase(clip1_tl_cropped_resized,clip2_tr_cropped_resized))
-print("SAM: ", sam(clip1_tl_cropped_resized,clip2_tr_cropped_resized))
-#print("VIF: ", vifp(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-
-# %%
-print("clip1 - tl vs clip2 - br")
-print("MSE: ", mse(clip1_tl_cropped_resized,clip2_br_cropped_resized))
-print("RMSE: ", rmse(clip1_tl_cropped_resized,clip2_br_cropped_resized))
-print("PSNR: ", psnr(clip1_tl_cropped_resized,clip2_br_cropped_resized))
-print("SSIM: ", ssim(clip1_tl_cropped_resized,clip2_br_cropped_resized))
-print("UQI: ", uqi(clip1_tl_cropped_resized,clip2_br_cropped_resized))
-#print("MSSSIM: ", msssim(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-print("ERGAS: ", ergas(clip1_tl_cropped_resized,clip2_br_cropped_resized))
-print("SCC: ", scc(clip1_tl_cropped_resized,clip2_br_cropped_resized))
-print("RASE: ", rase(clip1_tl_cropped_resized,clip2_br_cropped_resized))
-print("SAM: ", sam(clip1_tl_cropped_resized,clip2_br_cropped_resized))
-#print("VIF: ", vifp(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
-
-# %%
-clip1_tl_cropped_resized[:, :, 0][0]
-# %%
-print(
-sum(rel_entr(clip1_tl_cropped_resized[:, :, 0][0], clip2_br_cropped_resized[:, :, 0][0])),
-sum(rel_entr(clip1_tl_cropped_resized[:, :, 1][0], clip2_br_cropped_resized[:, :, 1][0])),
-sum(rel_entr(clip1_tl_cropped_resized[:, :, 2][0], clip2_br_cropped_resized[:, :, 2][0]))
-)
-
-# %%
-print(
-sum(rel_entr(clip1_tl_cropped_resized[:, :, 0][0], clip2_tl_cropped_resized[:, :, 0][0])),
-sum(rel_entr(clip1_tl_cropped_resized[:, :, 1][0], clip2_tl_cropped_resized[:, :, 1][0])),
-sum(rel_entr(clip1_tl_cropped_resized[:, :, 2][0], clip2_tl_cropped_resized[:, :, 2][0]))
-)
-
-# %%
-print(
-sum(rel_entr(clip1_tl_cropped_resized[:, :, 0][0], clip2_tr_cropped_resized[:, :, 0][0])),
-sum(rel_entr(clip1_tl_cropped_resized[:, :, 1][0], clip2_tr_cropped_resized[:, :, 1][0])),
-sum(rel_entr(clip1_tl_cropped_resized[:, :, 2][0], clip2_tr_cropped_resized[:, :, 2][0]))
-)
-
+###### 
+# def player_assig:
 
 # %%
 before_clip = reduced_player_labels[(reduced_player_labels.clip_number == 1) & (reduced_player_labels.frame_number == 0)]
@@ -872,23 +633,39 @@ before_clip
 # %%
 before_frame = cv2.imread(match_path + f"clip1/frames/frame_0.jpg")
 
-# %%
-# for i in range(2, max_clip_number + 1):
-i = 2
 
 # %%
-current_clip = reduced_player_labels[(reduced_player_labels.clip_number == i) & (reduced_player_labels.frame_number == 0)]
+player_1_location_info = ["tl"]
+player_2_location_info = ["tr"]
+player_3_location_info = ["br"]
+player_4_location_info = ["bl"]
+
+# %%
+reduced_player_labels.loc[(reduced_player_labels.clip_number == 1) & 
+                          (reduced_player_labels.player_by_location == player_1_location_info[0]), "player_by_frame_0"] = "player_1"
+reduced_player_labels.loc[(reduced_player_labels.clip_number == 1) & 
+                          (reduced_player_labels.player_by_location == player_2_location_info[0]), "player_by_frame_0"] = "player_2"
+reduced_player_labels.loc[(reduced_player_labels.clip_number == 1) & 
+                          (reduced_player_labels.player_by_location == player_3_location_info[0]), "player_by_frame_0"] = "player_3"
+reduced_player_labels.loc[(reduced_player_labels.clip_number == 1) & 
+                          (reduced_player_labels.player_by_location == player_4_location_info[0]), "player_by_frame_0"] = "player_4"
+# %%
+# for cn in range(2, max_clip_number + 1):
+cn = 3
+
+# %%
+current_clip = reduced_player_labels[(reduced_player_labels.clip_number == cn) & (reduced_player_labels.frame_number == 0)]
 current_clip
 
 # %%
-current_frame = cv2.imread(match_path + f"clip{i}/frames/frame_0.jpg")
+current_frame = cv2.imread(match_path + f"clip{cn}/frames/frame_0.jpg")
 
 # %%
 current_frame.shape
 
 # %%
-crop_resize_dim = (int(max(np.max(before_clip["h"]), np.max(current_clip["h"])) * current_frame.shape[0]),
-                   int(max(np.max(before_clip["w"]), np.max(current_clip["w"])) * current_frame.shape[1]))
+crop_resize_dim = (int(min(np.min(before_clip["h"]), np.min(current_clip["h"])) * current_frame.shape[0]),
+                   int(min(np.min(before_clip["w"]), np.min(current_clip["w"])) * current_frame.shape[1]))
 crop_resize_dim
 
 
@@ -906,19 +683,26 @@ before_current_clip
 
 
 # %%
-before_clip = before_current_clip[before_current_clip.clip_number == i - 1]
+before_clip = before_current_clip[before_current_clip.clip_number == cn - 1]
 before_clip
 
 # %%
-current_clip = before_current_clip[before_current_clip.clip_number == i]
+current_clip = before_current_clip[before_current_clip.clip_number == cn]
 current_clip
 
 # %%
-player_1_info = before_clip[before_clip.player_by_location == "tl"]
-player_2_info = before_clip[before_clip.player_by_location == "tr"]
-player_3_info = before_clip[before_clip.player_by_location == "br"]
-player_4_info = before_clip[before_clip.player_by_location == "bl"]
+cn
+# %%
+player_1_location_info[cn - 2]
 
+# %%
+player_1_info = before_clip[before_clip.player_by_frame_0 == "player_1"]
+player_2_info = before_clip[before_clip.player_by_frame_0 == "player_2"]
+player_3_info = before_clip[before_clip.player_by_frame_0 == "player_3"]
+player_4_info = before_clip[before_clip.player_by_frame_0 == "player_4"]
+
+# %%
+player_1_info
 # %%
 player_1_info["Ry1"].values[0]
 # %%
@@ -985,12 +769,6 @@ cv2_imshow(tr_cropped_resized)
 cv2_imshow(br_cropped_resized)
 cv2_imshow(bl_cropped_resized)
 
-# %%
-from scipy.special import kl_div
-
-# %%
-def kl_divergence(a, b):
-    return sum(a[i] * np.log(a[i]/b[i]) for i in range(len(a)))
 
 # %%
 player_1_best_list = []
@@ -998,7 +776,9 @@ player_2_best_list = []
 player_3_best_list = []
 player_4_best_list = []
 
-criteria = {"mse": mse, "ergas": ergas}
+# %%
+
+criteria = {"mse": mse, "ergas": ergas, "RASE": rase, "sam": sam}
 
 for k, v in criteria.items():
     print("criteria: ", k)
@@ -1009,6 +789,11 @@ for k, v in criteria.items():
     player_4_best = np.inf
     
     for i, current_cropped_resized in enumerate([tl_cropped_resized, tr_cropped_resized, br_cropped_resized, bl_cropped_resized]):
+        if i == 0: current = "tl"
+        elif i == 1: current = "tr"
+        elif i == 2: current = "br"
+        elif i == 3: current = "bl"
+        
         print("i: ", i)
         player_1_similarity = v(player_1_cropped_resized, current_cropped_resized)          
         player_2_similarity = v(player_2_cropped_resized, current_cropped_resized) 
@@ -1020,7 +805,8 @@ for k, v in criteria.items():
         print("current similarity: ", player_1_similarity)
         
         if player_1_similarity < player_1_best: 
-            player_1_best = i 
+            player_1_best = player_1_similarity
+            player_1_best_index = current 
             print("current similarity is better than current best")
         
         print("current best after compare: ", player_1_best)
@@ -1031,7 +817,8 @@ for k, v in criteria.items():
         print("current similarity: ", player_2_similarity)
         
         if player_2_similarity < player_2_best: 
-            player_2_best = i 
+            player_2_best = player_2_similarity 
+            player_2_best_index = current 
             print("current similarity is better than current best")
         
         print("current best after compare: ", player_2_best)
@@ -1042,7 +829,8 @@ for k, v in criteria.items():
         print("current similarity: ", player_3_similarity)
         
         if player_3_similarity < player_3_best: 
-            player_3_best = i 
+            player_3_best = player_3_similarity 
+            player_3_best_index = current 
             print("current similarity is better than current best")
         
         print("current best after compare: ", player_3_best)
@@ -1053,23 +841,206 @@ for k, v in criteria.items():
         print("current similarity: ", player_4_similarity)
         
         if player_4_similarity < player_4_best: 
-            player_4_best = i 
+            player_4_best = player_4_similarity 
+            player_4_best_index = current 
             print("current similarity is better than current best")
         
         print("current best after compare: ", player_4_best)
         print("")
                            
-    player_1_best_list.append(player_1_best)
-    player_2_best_list.append(player_2_best)
-    player_3_best_list.append(player_3_best)
-    player_4_best_list.append(player_4_best)
-    
+    player_1_best_list.append(player_1_best_index)
+    player_2_best_list.append(player_2_best_index)
+    player_3_best_list.append(player_3_best_index)
+    player_4_best_list.append(player_4_best_index)
 
 # %%
-player_4_best_list
+criteria = {"psnr": psnr, "uqi": uqi, "scc": scc}
+
+for k, v in criteria.items():
+    print("criteria: ", k)
+    
+    player_1_best = 0
+    player_2_best = 0
+    player_3_best = 0
+    player_4_best = 0
+    
+    for i, current_cropped_resized in enumerate([tl_cropped_resized, tr_cropped_resized, br_cropped_resized, bl_cropped_resized]):
+        if i == 0: current = "tl"
+        elif i == 1: current = "tr"
+        elif i == 2: current = "br"
+        elif i == 3: current = "bl"
+        
+        
+        print("i: ", i)
+        player_1_similarity = v(player_1_cropped_resized, current_cropped_resized)          
+        player_2_similarity = v(player_2_cropped_resized, current_cropped_resized) 
+        player_3_similarity = v(player_3_cropped_resized, current_cropped_resized) 
+        player_4_similarity = v(player_4_cropped_resized, current_cropped_resized) 
+        
+        print("- player 1 -")
+        print("current best: ", player_1_best)
+        print("current similarity: ", player_1_similarity)
+        
+        if player_1_similarity > player_1_best: 
+            player_1_best = player_1_similarity
+            player_1_best_index = current 
+            print("current similarity is better than current best")
+        
+        print("current best after compare: ", player_1_best)
+        print("")
+        
+        print("- player 2 -")
+        print("current best: ", player_2_best)
+        print("current similarity: ", player_2_similarity)
+        
+        if player_2_similarity > player_2_best: 
+            player_2_best = player_2_similarity 
+            player_2_best_index = current 
+            print("current similarity is better than current best")
+        
+        print("current best after compare: ", player_2_best)
+        print("")
+        
+        print("- player 3 -")
+        print("current best: ", player_3_best)
+        print("current similarity: ", player_3_similarity)
+        
+        if player_3_similarity > player_3_best: 
+            player_3_best = player_3_similarity 
+            player_3_best_index = current 
+            print("current similarity is better than current best")
+        
+        print("current best after compare: ", player_3_best)
+        print("")
+        
+        print("- player 4 -")
+        print("current best: ", player_4_best)
+        print("current similarity: ", player_4_similarity)
+        
+        if player_4_similarity > player_4_best: 
+            player_4_best = player_4_similarity 
+            player_4_best_index = current 
+            print("current similarity is better than current best")
+        
+        print("current best after compare: ", player_4_best)
+        print("")
+                           
+    player_1_best_list.append(player_1_best_index)
+    player_2_best_list.append(player_2_best_index)
+    player_3_best_list.append(player_3_best_index)
+    player_4_best_list.append(player_4_best_index)
+
+# %%
+print(player_1_best_list)
+print(player_2_best_list)
+print(player_3_best_list)
+print(player_4_best_list)
+
+# %%
+player_1_best_counter = Counter(player_1_best_list)
+player_2_best_counter = Counter(player_2_best_list)
+player_3_best_counter = Counter(player_3_best_list)
+player_4_best_counter = Counter(player_4_best_list)
+counteer_list = {"player_1": player_1_best_counter, 
+                 "player_2": player_2_best_counter, 
+                 "player_3": player_3_best_counter, 
+                 "player_4": player_4_best_counter}
+
+# %%
+max_vote_list = {"player_1": max(player_1_best_counter.values()),
+                 "player_2": max(player_2_best_counter.values()),
+                 "player_3": max(player_3_best_counter.values()),
+                 "player_4": max(player_4_best_counter.values())}
+max_vote_list
+# %%
+before_and_current_correct_mapping = {}
+
+# %%
+remaining = ["tl", "tr", "br", "bl"]
+# %%
+# for i in range 3 
+
+# %%
+max_key = max(max_vote_list, key=max_vote_list.get)
+max_key
+
+# %%
+counteer_list[max_key].items()
+# %%
+for k, v in counteer_list[max_key].most_common():
+    if k in remaining:
+        before_and_current_correct_mapping[max_key] = k
+        remaining.remove(k)
+        break
+        
+# %%
+before_and_current_correct_mapping
+
+# %%
+remaining
+# %%
+del max_vote_list[max_key]
+max_vote_list
+### end loop
+# %%
+max_key = max(max_vote_list, key=max_vote_list.get)
+max_key
+
+# %%
+remaining
+# %%
+before_and_current_correct_mapping[max_key] = remaining[0]
+
+# %%
+before_and_current_correct_mapping
+
+# %%
+for k, v in before_and_current_correct_mapping.items():
+    if k == "player_1": player_1_location_info.append(v)
+    elif k == "player_2": player_2_location_info.append(v)
+    elif k == "player_3": player_3_location_info.append(v)
+    elif k == "player_4": player_4_location_info.append(v)
+
+# %%
+print("player1 location info: ", player_1_location_info)
+print("player2 location info: ", player_2_location_info)
+print("player3 location info: ", player_3_location_info)
+print("player4 location info: ", player_4_location_info)
+
+# %%
+cn
+
+# %%
+
+# %%
+reduced_player_labels.loc[(reduced_player_labels.clip_number == cn) & 
+                          (reduced_player_labels.player_by_location == player_1_location_info[cn - 1]), "player_by_frame_0"] = "player_1"
+reduced_player_labels.loc[(reduced_player_labels.clip_number == cn) & 
+                          (reduced_player_labels.player_by_location == player_2_location_info[cn - 1]), "player_by_frame_0"] = "player_2"
+reduced_player_labels.loc[(reduced_player_labels.clip_number == cn) & 
+                          (reduced_player_labels.player_by_location == player_3_location_info[cn - 1]), "player_by_frame_0"] = "player_3"
+reduced_player_labels.loc[(reduced_player_labels.clip_number == cn) & 
+                          (reduced_player_labels.player_by_location == player_4_location_info[cn - 1]), "player_by_frame_0"] = "player_4"
+
+# %%
+before_clip = reduced_player_labels[(reduced_player_labels.clip_number == cn) & (reduced_player_labels.frame_number == 0)]
+before_clip
+
+# %%
+before_frame = cv2.imread(match_path + f"clip{cn}/frames/frame_0.jpg")
+
+
+
+
+
+
 
 # %%
 np.inf > 3
+
+# %%
+print("MSSSIM: ", msssim(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
+
 # %%
 print("MSE: ", mse(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
 print("RMSE: ", rmse(clip1_tl_cropped_resized,clip2_tl_cropped_resized))
