@@ -12,14 +12,14 @@ import time
 
 # %%
 # Download YOLOv7 repository and install requirements
-!git clone https://github.com/WongKinYiu/yolov7
-%cd yolov7
-!pip install -r requirements.txt
+# !git clone https://github.com/WongKinYiu/yolov7
+# %cd yolov7
+# !pip install -r requirements.txt
 
 # %%
 # download COCO starting checkpoint
 # %cd yolov7
-!wget https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7_training.pt
+# !wget https://github.com/WongKinYiu/yolov7/releases/download/v0.1/yolov7_training.pt
 
 # %%
 def player_detect(season, match_date, court_number, match_number):
