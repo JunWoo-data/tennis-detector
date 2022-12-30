@@ -372,8 +372,55 @@ def make_reduced_player_labels(season, match_date, court_number, match_number):
         print("== (step2) finish ==")
         print("")
         
+    reduced_player_labels_frame_0.to_csv(match_path + "reduced_player_labels.csv", index = False)
+    print("== Reduced player labels saved for " + season + " / " + match_date + " / " + court_number + " / " + match_number + " :")
+    print("- save path: " + match_path + "reduced_player_labels.csv")
+    print("- file name: reduced_player_labels.csv")
+    print("- size: " + str(reduced_player_labels_frame_0.shape))
+    print(" ")
+        
     return reduced_player_labels_frame_0
 
+# %%
+def check_player_by_location_movement(season, match_date, court_number, match_number):
+    match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+    
+    reduced_player_labels = pd.read_csv(match_path + "reduced_player_labels.csv")
+
+    max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
+    
+    if not os.path.exists("check/"):
+        os.mkdir("check/")
+        
+    for i in range(1, max_clip_number + 1):
+        frame_0_path = match_path + f"clip{i}/frames/frame_0.jpg"
+        frame_0 = cv2.imread(frame_0_path)
+        
+        current_clip = reduced_player_labels[reduced_player_labels.clip_number == i]
+        current_clip = current_clip.sort_values(["player_by_location", "frame_number"])[["player_by_location", "frame_number", "Rxf", "Ryf"]]
+        
+        tl = current_clip.loc[current_clip.player_by_location == "tl", ["frame_number", "Rxf", "Ryf"]]
+        tr = current_clip.loc[current_clip.player_by_location == "tr", ["frame_number", "Rxf", "Ryf"]]
+        bl = current_clip.loc[current_clip.player_by_location == "bl", ["frame_number", "Rxf", "Ryf"]]
+        br = current_clip.loc[current_clip.player_by_location == "br", ["frame_number", "Rxf", "Ryf"]]
+        
+        tl.index = tl.frame_number
+        tr.index = tr.frame_number
+        bl.index = bl.frame_number
+        br.index = br.frame_number
+        
+        fig = plt.figure(figsize = (20, 10))
+
+        ax = fig.add_subplot(111)
+        axp = ax.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
+        axp = ax.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
+        axp = ax.scatter(bl["Rxf"], bl["Ryf"], c = bl.index, cmap = plt.cm.Greens, s=100, zorder=1)
+        axp = ax.scatter(br["Rxf"], br["Ryf"], c = br.index, cmap = plt.cm.Greys, s=100, zorder=1)
+
+        ax.imshow(frame_0)
+        fig.savefig(f"check/{season}_{match_date}_{court_number}_{match_number}_clip{i}.png")
+        plt.close(fig)
+        
 # %%
 season = "22F"
 match_date = "20220908"
@@ -401,64 +448,20 @@ reduced_player_labels_frame_0 = make_reduced_player_labels(season, match_date, c
 reduced_player_labels_frame_0
 
 # %%
-temp = make_reduced_player_labels(season, match_date, court_number, match_number)
-temp
-
-# %%
-temp[temp.frame_number >= 298]
-
-# %%
-target_values = temp.loc[(temp.frame_number == 298) & (temp.player_by_location == "bl"), ["xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]]
-target_values
-
-# %%
-temp.loc[temp.index.isin([1341]), ["xc", "yc", "w", "h", "Rxf", "Ryf", "RTxf", "RTyf"]] = target_values.values
-
-# %%
-temp
-
-# %%
 np.sum(reduced_player_labels_frame_0.isnull())
 
 # %%
-reduced_player_labels_frame_0[reduced_player_labels_frame_0.xc.isnull()].sort_values(["clip_number", "frame_number"])
+reduced_player_labels_frame_0.to_csv(match_path + "reduced_player_labels.csv", index = False)
 
 # %%
-clip_number = 1 
-frame_number = 299 
-
-visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number)
+reduced_player_labels = pd.read_csv(match_path + "reduced_player_labels.csv")
+reduced_player_labels
 
 # %%
-cv2.imread(match_path + f"clip{clip_number}/frames/frame_{frame_number}.jpg")
-
-
-
-
+check_player_by_location_movement(season, match_date, court_number, match_number)
 
 
 # %%
-def check_player_by_location_movement(season, match_date, court_number, match_number):
-    match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
-
-    max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
-        
-    for i in range(1, max_clip_number + 1):
-        frame_0_path = match_path + f"clip{i}/frames/frame_0.jpg"
-        frame_0 = cv2.imread(frame_0_path)
-        
-        current_clip = reduced_player_labels_frame_0[reduced_player_labels_frame_0.clip_number == i]
-        current_clip = current_clip.sort_values(["player_by_location", "frame_number"])[["player_by_location", "frame_number", "Rxf", "Ryf"]]
-        
-        tl = current_clip.loc[current_clip.player_by_location == "tl", ["frame_number", "Rxf", "Ryf"]]
-        tr = current_clip.loc[current_clip.player_by_location == "tr", ["frame_number", "Rxf", "Ryf"]]
-        bl = current_clip.loc[current_clip.player_by_location == "bl", ["frame_number", "Rxf", "Ryf"]]
-        br = current_clip.loc[current_clip.player_by_location == "br", ["frame_number", "Rxf", "Ryf"]]
-        
-        tl.index = tl.frame_number
-        tr.index = tr.frame_number
-        bl.index = bl.frame_number
-        br.index = br.frame_number
 
         
  
@@ -485,20 +488,47 @@ bl.index = bl.frame_number
 br.index = br.frame_number
 
 # %%
+plt.ioff()
+# %%
 fig = plt.figure(figsize = (20, 10))
 
-ax = fig.add_subplot(111)
-axp = ax.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
-axp = ax.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
-axp = ax.scatter(bl["Rxf"], bl["Ryf"], c = bl.index, cmap = plt.cm.Greens, s=100, zorder=1)
-axp = ax.scatter(br["Rxf"], br["Ryf"], c = br.index, cmap = plt.cm.Greys, s=100, zorder=1)
+plt.subplot(2, 2, 1)
+plt.scatter(tl["Rxf"], tl["Ryf"], c = tl.index, cmap = plt.cm.Blues, s=100, zorder=1)
+plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
+plt.axis("off")
+plt.title("Top-Left Player movement during the clip", fontsize = 10)
 
-ax.imshow(frame_0)
-plt.show()
+plt.subplot(2, 2, 2)
+plt.scatter(tr["Rxf"], tr["Ryf"], c = tr.index, cmap = plt.cm.Reds, s=100, zorder=1)
+plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
+plt.axis("off")
+plt.title("Top-Right Player movement during the clip")
+
+
+plt.subplot(2, 2, 3)
+plt.scatter(bl["Rxf"], bl["Ryf"], c = bl.index, cmap = plt.cm.Greens, s=100, zorder=1)
+plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
+plt.axis("off")
+plt.title("Bottom-Left Player movement during the clip")
+
+plt.subplot(2, 2, 4)
+plt.scatter(br["Rxf"], br["Ryf"], c = br.index, cmap = plt.cm.Greys, s=100, zorder=1)
+plt.imshow(cv2.cvtColor(frame_0, cv2.COLOR_BGR2RGB))
+plt.axis("off")
+plt.title("Bottom-Right Player movement during the clip")
+
+os.mkdir(f"check/")
+fig.savefig(f"check/{season}_{match_date}_{court_number}_{match_number}_clip{i}.png")
+plt.close(fig)
+#plt.show()
 
 # %%
-os.makedir("/check/")
+os.getcwd()
 # %%
-fig.savefig("/check/clip1.png")
+os.mkdir("check/")
+# %%
+fig.savefig("check/clip1.png")
 
+# %%
+os.listdir(os.getcwd())
 # %%
