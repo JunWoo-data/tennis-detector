@@ -253,7 +253,7 @@ match_number = "match1"
 # clips_to_frames( "22F", "20220908", "court1", "match1")
 
 # %%
-# combine_yolo_detect_labels(season, match_date, court_number, match_number)
+# combine_yolos_detect_labels(season, match_date, court_number, match_number)
 
 # %%
 # combine_segment_detect_labels(season, match_date, court_number, match_number)
