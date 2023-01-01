@@ -174,7 +174,7 @@ def combine_segment_detect_labels(season, match_date, court_number, match_number
     print(" ")
 
 # %%
-def visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number, label = [0, 1, 38]):
+def visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number, label = [0, 32, 38]):
     match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
     labels_file_path = match_path + "/all_player_labels.csv"
     frames_path = match_path + "/clip" + str(clip_number) + "/frames/"
