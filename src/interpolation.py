@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 from scipy.spatial import distance_matrix
 from scipy.special import rel_entr
-from sewar.full_ref import mse, rmse, psnr, uqi, ssim, ergas, scc, rase, sam, msssim, vifp
 from collections import Counter
 import cv2
 import matplotlib as mpl
@@ -96,9 +95,9 @@ def Rxy2RTxy(Rxy_array, M):
 def make_all_player_labels_enrichment(season, match_date, court_number, match_number):
     match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
     
-    all_player_labels_path = match_path + "/all_player_labels.csv"
-    all_player_labels = pd.read_csv(all_player_labels_path)
-    all_player_labels = all_player_labels[all_player_labels["label"].isin([0])] 
+    all_yolo_labels_path = match_path + "/all_yolo_labels.csv"
+    all_yolo_labels = pd.read_csv(all_yolo_labels_path)
+    all_player_labels = all_yolo_labels[all_yolo_labels["label"].isin([0])] 
     all_player_labels.reset_index(inplace = True, drop = True)
     
     M, warped = find_coordinate_transform_matrix(season, match_date, court_number, match_number)
@@ -138,6 +137,43 @@ def make_court_coordinates_enrichment(season, match_date, court_number, match_nu
     court_coordinates["RTy2"] = RTx2y2_df["RTy2"]
     
     return court_coordinates
+
+# %%
+def make_all_temp_ball_labels_enrichment(season, match_date, court_number, match_number):
+    match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
+    
+    all_yolo_labels_path = match_path + "/all_yolo_labels.csv"
+    all_yolo_labels = pd.read_csv(all_yolo_labels_path)
+    all_temp_ball_labels = all_yolo_labels[all_yolo_labels["label"].isin([32])] 
+    all_temp_ball_labels.reset_index(inplace = True, drop = True)
+    
+    M, warped = find_coordinate_transform_matrix(season, match_date, court_number, match_number)
+    
+    all_temp_ball_labels["Rxc"] = all_temp_ball_labels["xc"] * WIDTH_ORIGINAL
+    all_temp_ball_labels["Ryc"] = all_temp_ball_labels["yc"] * HEIGHT_ORIGINAL
+    
+    Rxy_array = np.float32(all_temp_ball_labels[["Rxc", "Ryc"]].values.tolist())
+    RTxy_array = Rxy2RTxy(Rxy_array, M)
+    
+    RTxy_df = pd.DataFrame(RTxy_array, columns = ["RTxc", "RTyc"])
+    all_temp_ball_labels["RTxc"] = RTxy_df["RTxc"]
+    all_temp_ball_labels["RTyc"] = RTxy_df["RTyc"]
+    
+    court_coordinates_enriched = make_court_coordinates_enrichment(season, match_date, court_number, match_number)
+    
+    x_threshold = court_coordinates_enriched.loc[court_coordinates_enriched["type"] == "middle", "RTx1"].values[0]
+    y_threshold = court_coordinates_enriched.loc[court_coordinates_enriched["type"] == "net", "RTy1"].values[0]
+    
+    all_temp_ball_labels.loc[(all_temp_ball_labels["RTxc"] < x_threshold) & 
+                             (all_temp_ball_labels["RTyc"] < y_threshold), "ball_location"] = "tl"
+    all_temp_ball_labels.loc[(all_temp_ball_labels["RTxc"] > x_threshold) & 
+                             (all_temp_ball_labels["RTyc"] < y_threshold), "ball_location"] = "tr"
+    all_temp_ball_labels.loc[(all_temp_ball_labels["RTxc"] > x_threshold) & 
+                             (all_temp_ball_labels["RTyc"] > y_threshold), "ball_location"] = "br"
+    all_temp_ball_labels.loc[(all_temp_ball_labels["RTxc"] < x_threshold) & 
+                             (all_temp_ball_labels["RTyc"] > y_threshold), "ball_location"] = "bl"
+    
+    return all_temp_ball_labels
 
 # %%
 def make_empty_player_assign_info(season, match_date, court_number, match_number):
@@ -462,6 +498,10 @@ all_player_labels_enriched = make_all_player_labels_enrichment(season, match_dat
 all_player_labels_enriched
 
 # %%
+all_temp_ball_labels_enriched = make_all_temp_ball_labels_enrichment(season, match_date, court_number, match_number)
+all_temp_ball_labels_enriched
+
+# %%
 court_coordinates_enriched = make_court_coordinates_enrichment(season, match_date, court_number, match_number)
 court_coordinates_enriched
 
@@ -470,17 +510,61 @@ reduced_player_labels_frame_0 = make_reduced_player_labels(season, match_date, c
 reduced_player_labels_frame_0
 
 # %%
-np.sum(reduced_player_labels_frame_0.isnull())
-
-# %%
-reduced_player_labels_frame_0.to_csv(match_path + "reduced_player_labels.csv", index = False)
-
-# %%
 reduced_player_labels = pd.read_csv(match_path + "reduced_player_labels.csv")
 reduced_player_labels
 
 # %%
 check_player_by_location(season, match_date, court_number, match_number)
+
+# %%
+all_temp_ball_labels_enriched[all_temp_ball_labels_enriched.frame_number <= 150]
+
+# %%
+clip_number = 63 
+frame_number = 60
+coordinate = all_temp_ball_labels_enriched.loc[(all_temp_ball_labels_enriched.clip_number == clip_number) & (all_temp_ball_labels_enriched.frame_number == frame_number), ["Rxc", "Ryc"]].values[0]
+visualize_point_on_image(cv2.imread(match_path + f"clip{clip_number}/frames/frame_{frame_number}.jpg"), coordinate)
+
+# %%
+visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number)
+
+
+# %%
+all_temp_ball_labels_enriched["row_number"] = all_temp_ball_labels_enriched.sort_values(["clip_number", "frame_number"]).groupby(["clip_number"]).cumcount() + 1
+all_temp_ball_labels_enriched[all_temp_ball_labels_enriched["clip_number"] == 2].sort_values(["clip_number", "frame_number"])
+
+# %%
+all_temp_ball_labels_enriched[all_temp_ball_labels_enriched.row_number <= 3].groupby(["clip_number","ball_location"]).count()
+
+# %%
+all_temp_ball_labels_enriched[(all_temp_ball_labels_enriched.row_number <= 3) & (all_temp_ball_labels_enriched.clip_number == 3)].sort_values("frame_number")
+
+
+# %%
+clip_number = 3 
+frame_number = 31
+coordinate = all_temp_ball_labels_enriched.loc[(all_temp_ball_labels_enriched.clip_number == clip_number) & (all_temp_ball_labels_enriched.frame_number == frame_number), ["Rxc", "Ryc"]].values[0]
+visualize_point_on_image(cv2.imread(match_path + f"clip{clip_number}/frames/frame_{frame_number}.jpg"), coordinate)
+
+
+# %%
+clip_number = 3 
+frame_number = 31
+coordinate = all_temp_ball_labels_enriched.loc[(all_temp_ball_labels_enriched.clip_number == clip_number) & (all_temp_ball_labels_enriched.frame_number == frame_number), ["RTxc", "RTyc"]].values[0]
+visualize_point_on_image(warped, coordinate)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # %%
 match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
