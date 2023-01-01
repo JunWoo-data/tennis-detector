@@ -112,9 +112,9 @@ def clips_to_frames(season, match_date, court_number, match_number):
         cv2.destroyAllWindows()
 
 # %%
-def combine_player_detect_labels(season, match_date, court_number, match_number):
+def combine_yolo_detect_labels(season, match_date, court_number, match_number):
     max_clip_number = get_maximum_clip(season, match_date, court_number, match_number)
-    all_player_labels = pd.DataFrame(columns = ["clip_number", "frame_number", "label", "xc", "yc", "w", "h"])
+    all_yolo_labels = pd.DataFrame(columns = ["clip_number", "frame_number", "label", "xc", "yc", "w", "h"])
 
     for i in range(1, max_clip_number + 1):
         match_path = DATA_PATH + "detect/" + season + "/" + match_date + "/" + court_number + "/" + match_number + "/"
@@ -129,13 +129,13 @@ def combine_player_detect_labels(season, match_date, court_number, match_number)
             player_labels["frame_number"] = frame_number
             player_labels = player_labels[["clip_number", "frame_number", "label", "xc", "yc", "w", "h"]]
 
-            all_player_labels = all_player_labels.append(player_labels)
+            all_yolo_labels = all_yolo_labels.append(player_labels)
     
-    all_player_labels.to_csv(match_path + "all_player_labels.csv", index = False)
-    print("== All player labels saved for " + season + " / " + match_date + " / " + court_number + " / " + match_number + " :")
-    print("- save path: " + match_path + "all_player_labels.csv")
-    print("- file name: all_player_labels.csv")
-    print("- size: " + str(all_player_labels.shape))
+    all_yolo_labels.to_csv(match_path + "all_yolo_labels.csv", index = False)
+    print("== All yolo detect labels saved for " + season + " / " + match_date + " / " + court_number + " / " + match_number + " :")
+    print("- save path: " + match_path + "all_yolo_labels.csv")
+    print("- file name: all_yolo_labels.csv")
+    print("- size: " + str(all_yolo_labels.shape))
     print(" ")
 
 # %%
