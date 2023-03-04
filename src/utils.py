@@ -1,4 +1,6 @@
 # %%
+# If there is a following error: 
+# RuntimeError: imageio.ffmpeg.download() has been deprecated. Use 'pip install imageio-ffmpeg' instead.'
 # !sudo pip3 install imageio==2.4.1
 
 # %%

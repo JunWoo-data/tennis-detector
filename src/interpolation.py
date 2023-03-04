@@ -494,6 +494,9 @@ frame_0 = cv2.imread(frame_0_path)
 M, warped = find_coordinate_transform_matrix(season, match_date, court_number, match_number)
 
 # %%
+cv2_imshow(warped)
+
+# %%
 all_player_labels_enriched = make_all_player_labels_enrichment(season, match_date, court_number, match_number)
 all_player_labels_enriched
 
@@ -516,17 +519,39 @@ reduced_player_labels
 # %%
 check_player_by_location(season, match_date, court_number, match_number)
 
+
+# %%
+all_temp_ball_labels_enriched.sort_values(["clip_number", "frame_number"])
+
 # %%
 all_temp_ball_labels_enriched[all_temp_ball_labels_enriched.frame_number <= 150]
 
 # %%
-clip_number = 63 
-frame_number = 60
+clip_number = 10 
+frame_number = 66
 coordinate = all_temp_ball_labels_enriched.loc[(all_temp_ball_labels_enriched.clip_number == clip_number) & (all_temp_ball_labels_enriched.frame_number == frame_number), ["Rxc", "Ryc"]].values[0]
 visualize_point_on_image(cv2.imread(match_path + f"clip{clip_number}/frames/frame_{frame_number}.jpg"), coordinate)
 
 # %%
+clip_number = 1 
+frame_number = 27
+coordinate = all_temp_ball_labels_enriched.loc[(all_temp_ball_labels_enriched.clip_number == clip_number) & (all_temp_ball_labels_enriched.frame_number == frame_number), ["RTxc", "RTyc"]].values[0]
+visualize_point_on_image(warped, coordinate)
+
+# %%
+clip_number = 10
+frame_number = 2
 visualize_labels_of_frame(season, match_date, court_number, match_number, clip_number, frame_number)
+
+# %%
+warped.shape
+
+# %%
+valid_xcoord_mask = (all_temp_ball_labels_enriched.RTxc <= warped.shape[1]) & (all_temp_ball_labels_enriched.RTxc >= 0)
+valid_ycoord_mask = (all_temp_ball_labels_enriched.RTyc <= warped.shape[0]) & (all_temp_ball_labels_enriched.RTyc >= 0)
+clip_mask = all_temp_ball_labels_enriched.clip_number == 10
+all_temp_ball_labels_enriched[valid_xcoord_mask & valid_ycoord_mask & clip_mask].sort_values(["clip_number", "frame_number"])
+
 
 
 # %%
@@ -547,11 +572,7 @@ coordinate = all_temp_ball_labels_enriched.loc[(all_temp_ball_labels_enriched.cl
 visualize_point_on_image(cv2.imread(match_path + f"clip{clip_number}/frames/frame_{frame_number}.jpg"), coordinate)
 
 
-# %%
-clip_number = 3 
-frame_number = 31
-coordinate = all_temp_ball_labels_enriched.loc[(all_temp_ball_labels_enriched.clip_number == clip_number) & (all_temp_ball_labels_enriched.frame_number == frame_number), ["RTxc", "RTyc"]].values[0]
-visualize_point_on_image(warped, coordinate)
+
 
 
 
