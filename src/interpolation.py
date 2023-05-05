@@ -533,6 +533,26 @@ coordinate = all_temp_ball_labels_enriched.loc[(all_temp_ball_labels_enriched.cl
 visualize_point_on_image(cv2.imread(match_path + f"clip{clip_number}/frames/frame_{frame_number}.jpg"), coordinate)
 
 # %%
+# 토스를 해서 볼이 높이 올라갔을때 해당 볼의 RTxc, RTyc 가 비정상적인 값을 가지게된다
+# 이를 이용해서 각 클립별로 토스된 볼이 있는 프레임을 찾는다
+# 각 클립별로 토스된 볼이 있는 프레임 이전 프레임들에서 볼이 가장 많이 detect된 ball_location을 찾으면 해당 위치의 사람이 서버이다
+
+# %%
+target_bool = (all_temp_ball_labels_enriched.RTxc > 1300) | (all_temp_ball_labels_enriched.RTxc < 0) | \
+              (all_temp_ball_labels_enriched.RTyc > 800) | (all_temp_ball_labels_enriched.RTyc < 0) 
+
+# %%
+target_frame_number = all_temp_ball_labels_enriched[target_bool].sort_values(["clip_number", "frame_number"]).groupby(["clip_number"]).first() \
+                                                                .reset_index()[["clip_number", "frame_number"]].rename(columns = {"frame_number": "target_frame_number"})
+
+# %%
+merged = all_temp_ball_labels_enriched.merge(target_frame_number, how = "left", on = "clip_number")
+
+# %%
+merged[merged.frame_number < merged.target_frame_number].sort_values(["clip_number", "frame_number"]).head(50)
+
+
+# %%
 clip_number = 1 
 frame_number = 27
 coordinate = all_temp_ball_labels_enriched.loc[(all_temp_ball_labels_enriched.clip_number == clip_number) & (all_temp_ball_labels_enriched.frame_number == frame_number), ["RTxc", "RTyc"]].values[0]
