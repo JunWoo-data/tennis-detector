@@ -497,8 +497,8 @@ M, warped = find_coordinate_transform_matrix(season, match_date, court_number, m
 cv2_imshow(warped)
 
 # %%
-all_player_labels_enriched = make_all_player_labels_enrichment(season, match_date, court_number, match_number)
-all_player_labels_enriched
+# all_player_labels_enriched = make_all_player_labels_enrichment(season, match_date, court_number, match_number)
+# all_player_labels_enriched
 
 # %%
 all_temp_ball_labels_enriched = make_all_temp_ball_labels_enrichment(season, match_date, court_number, match_number)
@@ -509,8 +509,8 @@ court_coordinates_enriched = make_court_coordinates_enrichment(season, match_dat
 court_coordinates_enriched
 
 # %%
-reduced_player_labels_frame_0 = make_reduced_player_labels(season, match_date, court_number, match_number)
-reduced_player_labels_frame_0
+# reduced_player_labels_frame_0 = make_reduced_player_labels(season, match_date, court_number, match_number)
+# reduced_player_labels_frame_0
 
 # %%
 reduced_player_labels = pd.read_csv(match_path + "reduced_player_labels.csv")
